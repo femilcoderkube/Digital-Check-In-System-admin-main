@@ -60,7 +60,7 @@ const MainRoute = ({ children }) => {
           <div className="d-flex align-items-center justify-content-between">
             <Link to="/" className="logo d-flex align-items-center">
               <img src={logo} alt="" />
-              <span className="d-none d-lg-block">Heu Admin</span>
+              <span className="d-none d-lg-block">Digital Check In System Admin</span>
             </Link>
             <i
               className="bi bi-list toggle-sidebar-btn"
@@ -143,6 +143,7 @@ const MainRoute = ({ children }) => {
             {[
               { to: "/", icon: "bi-grid", label: "Dashboard" },
               { to: "/card-list", icon: "bi-credit-card", label: "Cards" },
+              { to: "/category-list", icon: "bi-tags", label: "Category" },
               
             ].map(({ to, icon, label }) => (
               <li className="nav-item" onClick={handleToggle} key={to}>

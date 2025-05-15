@@ -1,7 +1,8 @@
 {
-  "name": "Digital-Check-In-System-admin",
+  "name": "heu-card-admin",
   "version": "0.1.0",
   "private": true,
+  "homepage": "http://13.127.30.177/admin/",
   "dependencies": {
     "@react-google-maps/api": "^2.19.3",
     "@reduxjs/toolkit": "^2.2.7",

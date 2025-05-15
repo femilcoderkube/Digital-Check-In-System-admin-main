@@ -5,9 +5,9 @@ export const BASE_URL = process.env.REACT_APP_API_URL;
 
 const api = axios.create({
   baseURL: BASE_URL,
-  headers: {
-    "X-Requested-With": "XMLHttpRequest",
-  },
+  // headers: {
+  //   "X-Requested-With": "XMLHttpRequest",
+  // },
 });
 
 export const setAuthToken = (token) => {

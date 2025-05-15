@@ -3,7 +3,11 @@ import { Navigate } from 'react-router-dom';
 
 const PublicRoute = ({ children }) => {
   // const isAuthenticated = localStorage.getItem("token");
-  const isAuthenticated = false;
+   const authToken = localStorage.getItem("token");
+
+   
+   const isAuthenticated = !!authToken;
+
 
   return isAuthenticated ? <Navigate to="/" /> : children;
 };

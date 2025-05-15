@@ -7,6 +7,7 @@ import { loginSchema } from "../../../validationSchemas/validationSchemas";
 import { ButtonWithLoader } from "../../../components/buttons/Buttons";
 import { postCall } from "../../../utils/api";
 
+
 const Login = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -14,7 +15,7 @@ const Login = () => {
 
   const formik = useFormik({
     initialValues: {
-      email: "",
+      username: "",
       password: "",
     },
     validationSchema: loginSchema,
@@ -25,12 +26,15 @@ const Login = () => {
         console.log("Logging in with:", values);
         // Here you would typically call your API to log in
         const response = await postCall("/auth/login",values);
-        // if (response.success) {
-        //   localStorage.setItem("token", response.data.token);
-        //   navigate("/");
-        // } else {
-        //   console.log("Login failed");
-        // }
+        console.log(response);
+        
+        if (response.userData.authToken) {
+          localStorage.setItem("token", response.userData.authToken);
+           console.log("token:", response.userData.authToken); 
+          navigate("/");
+        } else {
+          console.log("Login failed");
+        }
         navigate("/"); // Simulate successful login
       } catch (error) {
         console.log("Something went wrong");
@@ -68,7 +72,7 @@ const Login = () => {
                         Login
                       </h5>
                       <p className="text-center small">
-                        Enter your email & password to login
+                        Enter your username & password to login
                       </p>
                     </div>
 
@@ -78,31 +82,31 @@ const Login = () => {
                       onSubmit={formik.handleSubmit}
                     >
                       <div className="col-12">
-                        <label htmlFor="email" className="form-label">
-                          Email
+                        <label htmlFor="username" className="form-label">
+                          Username
                         </label>
                         <input
                           type="text"
-                          name="email"
+                          name="username"
                           className={`form-control ${
-                            formik.touched.email && formik.errors.email
+                            formik.touched.username && formik.errors.username
                               ? "input-offer-error"
                               : "input-bg-error"
                           }`}
-                          id="email"
-                          placeholder="Enter Email"
-                          value={formik.values.email}
+                          id="username"
+                          placeholder="Enter username"
+                          value={formik.values.username}
                           onChange={(e) => {
                             formik.setFieldValue(
-                              "email",
+                              "username",
                               e.target.value.trimStart()
                             );
                           }}
                           onBlur={formik.handleBlur}
                         />
-                        {formik.touched.email && formik.errors.email && (
+                        {formik.touched.username && formik.errors.username && (
                           <div style={{ color: "red" }}>
-                            {formik.errors.email}
+                            {formik.errors.username}
                           </div>
                         )}
                       </div>
@@ -172,7 +176,7 @@ const Login = () => {
                         </div>
 
                         <div>
-                          <Link to="/send-email" className="forgot_pass">
+                          <Link to="/send-username" className="forgot_pass">
                             Forgot password ?
                           </Link>
                         </div>

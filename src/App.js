@@ -30,7 +30,7 @@ const App = () => {
     <div>
       {/* {isLoading && <Loader />} */}
       <Toaster position="top-right" />
-      <BrowserRouter basename="/">
+      <BrowserRouter>
         <Suspense fallback={<Loader />}>
           <Routes>
             {routes.map(({ path, component, isPublic }) => {
