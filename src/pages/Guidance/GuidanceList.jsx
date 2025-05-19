@@ -16,12 +16,12 @@ import useSearchData from "../../hook/useSearchData";
 import DeleteConfirmationModal from "../../components/deleteModel/DeleteConfirmationModal";
 import { deleteCall, getCall } from "../../utils/api";
 
-const CategoryList = () => {
+const GuidanceList = () => {
   const [data, setData] = useState([]);
   const [status, setStatus] = useState("idle");
-  const [deleteId, setDeleteId] = useState(null); // For single deletion
+  const [deleteId, setDeleteId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedIds, setSelectedIds] = useState([]); // For bulk deletion
+  const [selectedIds, setSelectedIds] = useState([]);
   const navigate = useNavigate();
 
   const { inputValue, handleInputChange } = useSearchData();
@@ -32,19 +32,25 @@ const CategoryList = () => {
     handleRowsPerPageChange,
     rowsPerPageOptions,
     handlePageChange,
+    total,
+    lastPage,
   } = usePaginationData({ total: 0, per_page: 10, last_page: 1 });
 
-  // Fetch data
   const fetchData = async () => {
     setStatus("loading");
     try {
       const response = await getCall(
-        `/admin/getPrimaryFeelings?search=${inputValue}`
+        `/guidance/getGuidance?page=${currentPage}&limit=${perPage}&search=${inputValue}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
       );
       setData(response?.data || []);
       console.log("response", response?.data);
     } catch (error) {
-      console.error("Error fetching data", error);
+      console.error("Error fetching guidance data", error);
       setData([]);
     } finally {
       setStatus("succeeded");
@@ -62,36 +68,31 @@ const CategoryList = () => {
 
   const handleDelete = async () => {
     try {
-      // Determine IDs to delete: use selectedIds for bulk, or deleteId for single
       const idsToDelete = selectedIds.length > 0 ? selectedIds : [deleteId];
-
-      // Perform deletion for each ID
       await Promise.all(
         idsToDelete.map((id) =>
-          deleteCall(`/admin/deletePrimaryFeeling?primary_feeling_id=${id}`)
+          deleteCall(`/guidance/deleteGuidance?guidance_id=${id}`, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          })
         )
       );
-
-      // Update local state to remove deleted items
       setData((prevData) =>
         prevData.filter((item) => !idsToDelete.includes(item._id))
       );
-
-      // Clear selections and close modal
       setSelectedIds([]);
       handleDeleteClose();
     } catch (error) {
-      console.error("Error deleting categories:", error);
+      console.error("Error deleting guidance:", error);
     }
   };
 
   const showDeleteConfirmation = (id) => {
     if (Array.isArray(id)) {
-      // Bulk delete
       setSelectedIds(id);
       setDeleteId(null);
     } else {
-      // Single delete
       setDeleteId(id);
       setSelectedIds([]);
     }
@@ -101,6 +102,7 @@ const CategoryList = () => {
   const handleSelectAllOnPage = (e) => {
     const allIdsOnPage = data?.map((item) => item._id) || [];
     if (e.target.checked) {
+    //   InflatedTableCell from "@mui/material";
       setSelectedIds((prev) => [...new Set([...prev, ...allIdsOnPage])]);
     } else {
       setSelectedIds((prev) => prev.filter((id) => !allIdsOnPage.includes(id)));
@@ -137,30 +139,30 @@ const CategoryList = () => {
       ),
     },
     {
-      key: "categoryName",
-      label: "Category Name",
-      render: (item) => item.name,
+      key: "primaryFeeling",
+      label: "Primary Feeling",
+      render: (item) => item.primaryFeeling?.name || "N/A",
     },
     {
-      key: "status",
-      label: "Status",
-      render: (item) => item.status,
+      key: "secondaryFeeling",
+      label: "Secondary Feeling",
+      render: (item) => item.secondaryFeeling?.name || "N/A",
     },
     {
-      key: "color_code",
-      label: "Color Code",
-      render: (item) => item.color_code,
+      key: "description",
+      label: "Description",
+      render: (item) => item.description,
     },
   ];
 
   return (
     <>
-      <CommonLayout title="Category List">
+      <CommonLayout title="Guidance List">
         <div className="search-main mb-3">
           <CommonSearchBar
             searchQuery={inputValue}
             setSearchQuery={handleInputChange}
-            placeholder="Search category"
+            placeholder="Search guidance"
           />
           <div className="btn-container">
             {selectedIds.length > 0 ? (
@@ -168,7 +170,7 @@ const CategoryList = () => {
                 onClick={() => showDeleteConfirmation(selectedIds)}
               />
             ) : (
-              <AddLinkButton to="/add-category" />
+              <AddLinkButton to="/add-guidance" />
             )}
           </div>
         </div>
@@ -178,33 +180,30 @@ const CategoryList = () => {
           data={data}
           isLoading={status === "loading"}
           actions={(item) => (
-            <>
+           <>
               <EditButton
-                onClick={() => navigate(`/edit-category/${item._id}`)}
+                onClick={() => navigate(`/edit-guidance/${item._id}`)}
               />
               <ViewButton
-                onClick={() => navigate(`/view-category/${item._id}`)}
+                onClick={() => navigate(`/view-guidance/${item._id}`)}
               />
               <DeleteButton onClick={() => showDeleteConfirmation(item._id)} />
             </>
           )}
-          rowClick={(item) =>
-            navigate(`/${item.name.toLowerCase().replace(/\s+/g, "")}list`)
-          }
+          rowClick={(item) => navigate(`/guidance/${item._id}`)}
         />
 
-        {/* Uncomment and update if pagination is needed */}
-        {/* {data?.length > 0 && (
+        {data?.length > 0 && (
           <PaginationData
             currentPage={currentPage}
             perPage={perPage}
             handleRowsPerPageChange={handleRowsPerPageChange}
             rowsPerPageOptions={rowsPerPageOptions}
             handlePageChange={handlePageChange}
-            totalPage={data.length}
-            lastPage={1}
+            totalPage={total}
+            lastPage={lastPage}
           />
-        )} */}
+        )}
       </CommonLayout>
 
       <DeleteConfirmationModal
@@ -214,12 +213,12 @@ const CategoryList = () => {
         isDeleting={status}
         message={`Are you sure you want to delete ${
           selectedIds.length > 1 || (selectedIds.length === 0 && !deleteId)
-            ? "these categories"
-            : "this category"
+            ? "these guidance entries"
+            : "this guidance entry"
         }?`}
       />
     </>
   );
 };
 
-export default CategoryList;
+export default GuidanceList;

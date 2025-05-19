@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { getCall } from "../../utils/api";
 import ColorPicker from "react-pick-color";
 
 const photoSchema = Yup.object().shape({
@@ -10,6 +11,8 @@ const photoSchema = Yup.object().shape({
   color_code: Yup.string()
     .matches(/^#([0-9A-F]{3}){1,2}$/i, "Invalid color code")
     .required("Color code is required"),
+  primary_feeling_id: Yup.string().required("Primary feeling is required"),
+  status: Yup.string().required("Status is required"),
   icon: Yup.mixed()
     .test("fileSize", "File too large", (value) => {
       // Allow null, undefined, or string (existing URL like "http://192.168.1.11:8089/uploads/icon-1747386054804-121253819.gif")
@@ -21,17 +24,19 @@ const photoSchema = Yup.object().shape({
       // Allow null, undefined, or string
       if (!value || typeof value === "string") return true;
       // Only validate type for File objects
-      return ["image/gif"].includes(value.type);
+      return ["image/gif","image/jpg","image/png","image/jpeg"].includes(value.type);
     }),
 });
 
-const CategoryForm = ({
+const FeelingForm = ({
   onSubmit,
-  editCategoryData,
+  editFeelingData,
   isEdit = false,
   isLoading,
 }) => {
   const [previewImage, setPreviewImage] = useState(null);
+  const [primaryFeelings, setPrimaryFeelings] = useState([]);
+  const [fetchStatus, setFetchStatus] = useState("idle");
   const [color, setColor] = useState("#fff");
 
   const formik = useFormik({
@@ -39,7 +44,8 @@ const CategoryForm = ({
       name: "",
       color_code: "",
       icon: null,
-      status: "Active",
+      primary_feeling_id: "",
+      status: "Active", // Default status
     },
     validationSchema: photoSchema,
     onSubmit: (values) => {
@@ -50,23 +56,65 @@ const CategoryForm = ({
       if (values.icon && values.icon instanceof File) {
         formData.append("icon", values.icon);
       }
-      formData.append("status", values.status);
+      formData.append("primary_feeling_id", values.primary_feeling_id);
+      formData.append("status", values.status); // Added status field
+      
       onSubmit(formData);
     },
   });
 
+  // Fetch primary feelings
   useEffect(() => {
-    if (isEdit && editCategoryData) {
-      // Set preview to the existing icon URL (e.g., "http://192.168.1.11:8089/uploads/icon-1747386054804-121253819.gif")
-      setPreviewImage(editCategoryData?.icon || null);
+    const fetchFeelings = async () => {
+      setFetchStatus("loading");
+      try {
+        // Fetch primary feelings
+        const primaryResponse = await getCall("/admin/getPrimaryFeelings", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        // Ensure response.data is an array
+        setPrimaryFeelings(Array.isArray(primaryResponse?.data) ? primaryResponse.data : []);
+      } catch (error) {
+        console.error("Error fetching primary feelings:", error);
+        setPrimaryFeelings([]);
+      } finally {
+        setFetchStatus("succeeded");
+      }
+    };
+
+    fetchFeelings();
+  }, []);
+
+  // Handle setting form values when editing
+  useEffect(() => {
+    if (isEdit && editFeelingData) {
+      console.log("Setting form values with edit data:", editFeelingData);
+      
+      // Set preview to the existing icon URL
+      if (editFeelingData.icon) {
+        setPreviewImage(editFeelingData.icon);
+      }
+      
+      // Format primary_feeling_id if it's an object
+      let primaryFeelingId = editFeelingData.primary_feeling_id;
+      if (typeof primaryFeelingId === 'object' && primaryFeelingId?._id) {
+        primaryFeelingId = primaryFeelingId._id;
+      }
+      
+      // Set form values
       formik.setValues({
-        name: editCategoryData.name || "", // e.g., "Melting"
-        color_code: editCategoryData.color_code || "", // e.g., "#FF00FF"
-        icon: editCategoryData?.icon || null, // e.g., URL or null
-        status: editCategoryData?.status || "", // e.g., "Active"
+        name: editFeelingData.name || "", 
+        color_code: editFeelingData.color_code || "", 
+        icon: editFeelingData.icon || null, 
+        primary_feeling_id: primaryFeelingId || "",
+        status: editFeelingData.status || "Active",
       });
+      
+      console.log("Form values set:", formik.values);
     }
-  }, [editCategoryData, isEdit]);
+  }, [editFeelingData, isEdit]);
 
   useEffect(() => {
     return () => {
@@ -78,8 +126,40 @@ const CategoryForm = ({
 
   return (
     <form onSubmit={formik.handleSubmit} className="container mt-4">
-      
-      
+      {/* Primary Feeling Dropdown */}
+      <div className="row mb-3">
+        <label htmlFor="primary_feeling_id" className="col-sm-3 col-form-label">
+          Primary Feeling<span style={{ color: "red" }}>*</span>
+        </label>
+        <div className="col-sm-9">
+          <select
+            id="primary_feeling_id"
+            name="primary_feeling_id"
+            className="form-control"
+            value={formik.values.primary_feeling_id}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            disabled={fetchStatus === "loading"}
+          >
+            <option value="">Select Primary Feeling</option>
+            {primaryFeelings.map((feeling) => (
+              <option key={feeling._id} value={feeling._id}>
+                {feeling.name}
+              </option>
+            ))}
+          </select>
+          {fetchStatus === "loading" && <div>Loading feelings...</div>}
+          {fetchStatus === "succeeded" && primaryFeelings.length === 0 && (
+            <div style={{ color: "red" }}>No primary feelings available</div>
+          )}
+          {formik.touched.primary_feeling_id && formik.errors.primary_feeling_id && (
+            <div style={{ color: "red" }}>{formik.errors.primary_feeling_id}</div>
+          )}
+        </div>
+      </div>
+
+     
+
       {/* Name */}
       <div className="row mb-3">
         <label htmlFor="name" className="col-sm-3 col-form-label">
@@ -101,14 +181,27 @@ const CategoryForm = ({
           )}
         </div>
       </div>
+
       {/* Color Code */}
       <div className="row mb-3">
         <label htmlFor="color_code" className="col-sm-3 col-form-label">
           Color Code<span style={{ color: "red" }}>*</span>
         </label>
-
         <div className="col-sm-9">
-          <ColorPicker
+          {/* <input
+            type="text"
+            id="color_code"
+            name="color_code"
+            className="form-control"
+            placeholder="#FFFF00"
+            value={formik.values.color_code}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+          />
+          {formik.touched.color_code && formik.errors.color_code && (
+            <div style={{ color: "red" }}>{formik.errors.color_code}</div>
+          )} */}
+           <ColorPicker
             color={formik.values.color_code}
             onChange={(color) => {
               const selectedColor = color.hex;
@@ -122,7 +215,8 @@ const CategoryForm = ({
         </div>
       </div>
 
-      <div className="row mb-3">
+       {/* Icon Upload */}
+       <div className="row mb-3">
         <label htmlFor="icon" className="col-sm-3 col-form-label">
           Upload Icon
         </label>
@@ -135,9 +229,7 @@ const CategoryForm = ({
                 style={{ maxWidth: "100px", maxHeight: "100px" }}
               />
               <p>
-                {isEdit && formik.values.icon === editCategoryData?.icon
-                  ? "Current Icon"
-                  : "Preview"}
+                {isEdit ? "Current Icon" : "Preview"}
               </p>
             </div>
           )}
@@ -149,14 +241,11 @@ const CategoryForm = ({
             accept="image/gif"
             onChange={(event) => {
               const file = event.currentTarget.files[0];
-              formik.setFieldValue(
-                "icon",
-                file || editCategoryData?.icon || null
-              );
+              formik.setFieldValue("icon", file || editFeelingData?.icon || null);
               if (file) {
                 setPreviewImage(URL.createObjectURL(file));
               } else {
-                setPreviewImage(editCategoryData?.icon || null); // Revert to existing URL
+                setPreviewImage(editFeelingData?.icon || null); // Revert to existing URL
               }
             }}
             // onBlur={formik.handleBlur}
@@ -166,9 +255,11 @@ const CategoryForm = ({
           )}
         </div>
       </div>
+
+      {/* Status */}
       <div className="row mb-3">
         <label htmlFor="status" className="col-sm-3 col-form-label">
-          Status
+          Status<span style={{ color: "red" }}>*</span>
         </label>
         <div className="col-sm-9">
           <select
@@ -187,12 +278,14 @@ const CategoryForm = ({
           )}
         </div>
       </div>
+
+      {/* Submit Button */}
       <div className="row">
         <div className="col-sm-9 offset-sm-2">
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={isLoading}
+            disabled={isLoading || fetchStatus === "loading"}
           >
             {isLoading ? "Saving..." : isEdit ? "Update" : "Submit"}
           </button>
@@ -202,4 +295,4 @@ const CategoryForm = ({
   );
 };
 
-export default CategoryForm;
+export default FeelingForm; 

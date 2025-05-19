@@ -37,7 +37,7 @@ const CommonView = ({ title, image, name, data, user, isLoading }) => {
                     />
                   </svg>
                 ) : (
-                  "N/A"
+                 ""
                 )}
 
                 <h6>

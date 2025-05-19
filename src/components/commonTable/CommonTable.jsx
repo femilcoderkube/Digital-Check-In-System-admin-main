@@ -35,14 +35,16 @@ const CommonTable = ({ columns, data, isLoading, paddingRight, actions }) => {
                 {col.label}
               </th>
             ))}
-            <th
-              style={{
-                textAlign: "right",
-                paddingRight: paddingRight || "60px",
-              }}
-            >
-              Action
-            </th>
+            {actions && (
+              <th
+                style={{
+                  textAlign: "right",
+                  paddingRight: paddingRight || "60px",
+                }}
+              >
+                Action
+              </th>
+            )}
           </tr>
         </thead>
         {isLoading === "loading" ? (
@@ -69,15 +71,17 @@ const CommonTable = ({ columns, data, isLoading, paddingRight, actions }) => {
                       {col.render ? col.render(item) : item[col.key]}
                     </td>
                   ))}
-                  <td style={{ textAlign: "right" }}>
-                    <div className="btn-container">{actions(item)}</div>
-                  </td>
+                  {actions && (
+                    <td style={{ textAlign: "right" }}>
+                      <div className="btn-container">{actions(item)}</div>
+                    </td>
+                  )}
                 </tr>
               ))
             ) : (
               <tr>
                 <td
-                  colSpan={columns.length + 1}
+                  colSpan={actions ? columns.length + 1 : columns.length}
                   style={{ textAlign: "center" }}
                 >
                   No data is available

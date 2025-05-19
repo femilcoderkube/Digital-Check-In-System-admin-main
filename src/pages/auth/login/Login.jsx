@@ -7,7 +7,6 @@ import { loginSchema } from "../../../validationSchemas/validationSchemas";
 import { ButtonWithLoader } from "../../../components/buttons/Buttons";
 import { postCall } from "../../../utils/api";
 
-
 const Login = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -15,8 +14,8 @@ const Login = () => {
 
   const formik = useFormik({
     initialValues: {
-      username: "",
-      password: "",
+      email: "test.admin@yopmail.com",
+      password: "Test@123",
     },
     validationSchema: loginSchema,
     onSubmit: async (values) => {
@@ -25,18 +24,19 @@ const Login = () => {
         // Simulate an API call
         console.log("Logging in with:", values);
         // Here you would typically call your API to log in
-        const response = await postCall("/auth/login",values);
+        // const response = await postCall("/auth/login", values);
+        const response = await postCall("/adminauth/login", values);
         console.log(response);
-        
-        if (response.userData.authToken) {
-          localStorage.setItem("token", response.userData.authToken);
-           console.log("token:", response.userData.authToken); 
+
+        if (response?.data?.authToken) {
+          localStorage.setItem("token", response?.data?.authToken);
           navigate("/");
         } else {
           console.log("Login failed");
         }
         navigate("/"); // Simulate successful login
       } catch (error) {
+        console.log("err", error);
         console.log("Something went wrong");
       } finally {
         setIsLoading(false);
@@ -60,8 +60,10 @@ const Login = () => {
                     to="/login"
                     className="logo d-flex align-items-center w-auto"
                   >
-                    <img src={logo} alt="" />
-                    <span className="d-none d-lg-block">Heu Admin</span>
+                    {/* <img src={logo} alt="" /> */}
+                    <span className="d-none d-lg-block">
+                      Digital Check In System
+                    </span>
                   </Link>
                 </div>
 
@@ -82,31 +84,31 @@ const Login = () => {
                       onSubmit={formik.handleSubmit}
                     >
                       <div className="col-12">
-                        <label htmlFor="username" className="form-label">
-                          Username
+                        <label htmlFor="email" className="form-label">
+                          Email
                         </label>
                         <input
                           type="text"
-                          name="username"
+                          name="email"
                           className={`form-control ${
-                            formik.touched.username && formik.errors.username
+                            formik.touched.email && formik.errors.email
                               ? "input-offer-error"
                               : "input-bg-error"
                           }`}
-                          id="username"
-                          placeholder="Enter username"
-                          value={formik.values.username}
+                          id="email"
+                          placeholder="Enter email"
+                          value={formik.values.email}
                           onChange={(e) => {
                             formik.setFieldValue(
-                              "username",
+                              "email",
                               e.target.value.trimStart()
                             );
                           }}
                           onBlur={formik.handleBlur}
                         />
-                        {formik.touched.username && formik.errors.username && (
+                        {formik.touched.email && formik.errors.email && (
                           <div style={{ color: "red" }}>
-                            {formik.errors.username}
+                            {formik.errors.email}
                           </div>
                         )}
                       </div>
@@ -174,12 +176,12 @@ const Login = () => {
                             Remember me
                           </label>
                         </div>
-
+                        {/* 
                         <div>
-                          <Link to="/send-username" className="forgot_pass">
+                          <Link to="/send-email" className="forgot_pass">
                             Forgot password ?
                           </Link>
-                        </div>
+                        </div> */}
                       </div>
                       <div className="col-12">
                         <ButtonWithLoader

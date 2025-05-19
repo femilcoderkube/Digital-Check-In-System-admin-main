@@ -16,7 +16,7 @@ import useSearchData from "../../hook/useSearchData";
 import DeleteConfirmationModal from "../../components/deleteModel/DeleteConfirmationModal";
 import { deleteCall, getCall } from "../../utils/api";
 
-const CategoryList = () => {
+const KidsFeelingList = () => {
   const [data, setData] = useState([]);
   const [status, setStatus] = useState("idle");
   const [deleteId, setDeleteId] = useState(null); // For single deletion
@@ -39,10 +39,34 @@ const CategoryList = () => {
     setStatus("loading");
     try {
       const response = await getCall(
-        `/admin/getPrimaryFeelings?search=${inputValue}`
+        `/kidsFeelings/getAllKidsFeelings?search=${inputValue}`
       );
-      setData(response?.data || []);
-      console.log("response", response?.data);
+      
+      // Process the response to extract secondary kids
+      let processedData = [];
+      if (response?.data) {
+        // If a single object with secondary_kids array
+        if (!Array.isArray(response.data) && response.data.secondary_kids) {
+          processedData = response.data.secondary_kids;
+        } 
+        // If an array of objects with secondary_kids arrays
+        else if (Array.isArray(response.data)) {
+          response.data.forEach(item => {
+            if (item.secondary_kids && Array.isArray(item.secondary_kids)) {
+              processedData = [...processedData, ...item.secondary_kids];
+            } else {
+              processedData.push(item);
+            }
+          });
+        } 
+        // If direct array of secondary kids
+        else {
+          processedData = Array.isArray(response.data) ? response.data : [response.data];
+        }
+      }
+      
+      setData(processedData);
+      console.log("Processed data:", processedData);
     } catch (error) {
       console.error("Error fetching data", error);
       setData([]);
@@ -68,7 +92,7 @@ const CategoryList = () => {
       // Perform deletion for each ID
       await Promise.all(
         idsToDelete.map((id) =>
-          deleteCall(`/admin/deletePrimaryFeeling?primary_feeling_id=${id}`)
+          deleteCall(`/admin/deleteSecondaryFeeling?secondary_feeling_id=${id}`)
         )
       );
 
@@ -81,7 +105,7 @@ const CategoryList = () => {
       setSelectedIds([]);
       handleDeleteClose();
     } catch (error) {
-      console.error("Error deleting categories:", error);
+      console.error("Error deleting kids:", error);
     }
   };
 
@@ -137,8 +161,8 @@ const CategoryList = () => {
       ),
     },
     {
-      key: "categoryName",
-      label: "Category Name",
+      key: "feelingName",
+      label: "Feeling Name",
       render: (item) => item.name,
     },
     {
@@ -147,20 +171,29 @@ const CategoryList = () => {
       render: (item) => item.status,
     },
     {
-      key: "color_code",
-      label: "Color Code",
-      render: (item) => item.color_code,
+      key: "icon",
+      label: "Icon",
+      render: (item) => 
+        item.icon ? (
+          <img 
+            src={item.icon} 
+            alt={item.name} 
+            style={{ width: "40px", height: "40px" }} 
+          />
+        ) : (
+          "No Icon"
+        )
     },
   ];
 
   return (
     <>
-      <CommonLayout title="Category List">
+      <CommonLayout title="Secondary kids List">
         <div className="search-main mb-3">
           <CommonSearchBar
             searchQuery={inputValue}
             setSearchQuery={handleInputChange}
-            placeholder="Search category"
+            placeholder="Search feeling"
           />
           <div className="btn-container">
             {selectedIds.length > 0 ? (
@@ -168,7 +201,7 @@ const CategoryList = () => {
                 onClick={() => showDeleteConfirmation(selectedIds)}
               />
             ) : (
-              <AddLinkButton to="/add-category" />
+              <AddLinkButton to="/add-kids-feeling" />
             )}
           </div>
         </div>
@@ -180,17 +213,14 @@ const CategoryList = () => {
           actions={(item) => (
             <>
               <EditButton
-                onClick={() => navigate(`/edit-category/${item._id}`)}
+                onClick={() => navigate(`/edit-feeling/${item._id}`)}
               />
               <ViewButton
-                onClick={() => navigate(`/view-category/${item._id}`)}
+                onClick={() => navigate(`/view-feeling/${item._id}`)}
               />
               <DeleteButton onClick={() => showDeleteConfirmation(item._id)} />
             </>
           )}
-          rowClick={(item) =>
-            navigate(`/${item.name.toLowerCase().replace(/\s+/g, "")}list`)
-          }
         />
 
         {/* Uncomment and update if pagination is needed */}
@@ -214,12 +244,12 @@ const CategoryList = () => {
         isDeleting={status}
         message={`Are you sure you want to delete ${
           selectedIds.length > 1 || (selectedIds.length === 0 && !deleteId)
-            ? "these categories"
-            : "this category"
+            ? "these kids"
+            : "this feeling"
         }?`}
       />
     </>
   );
 };
 
-export default CategoryList;
+export default KidsFeelingList; 

@@ -3,7 +3,6 @@ import logo from "../../assets/img/logo.png";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import PrivateRoute from "../../routes/privateRoute/PrivateRoute";
 
-
 const MainRoute = ({ children }) => {
   // hooks
   const navigate = useNavigate();
@@ -20,7 +19,7 @@ const MainRoute = ({ children }) => {
         first_name: "John",
         last_name: "Doe",
         email: "john.doe@example.com",
-        image: logo
+        image: logo,
       };
       setUser(dummyUser);
     };
@@ -42,8 +41,9 @@ const MainRoute = ({ children }) => {
   const handleLogout = () => {
     // Dummy implementation
     console.log("User logged out");
+    localStorage.removeItem("token");
     // Optionally navigate to login page if needed
-    // navigate("/login");
+    navigate("/login");
   };
 
   const handleRouteChange = () => {
@@ -60,7 +60,9 @@ const MainRoute = ({ children }) => {
           <div className="d-flex align-items-center justify-content-between">
             <Link to="/" className="logo d-flex align-items-center">
               <img src={logo} alt="" />
-              <span className="d-none d-lg-block">Digital Check In System Admin</span>
+              <span className="d-none d-lg-block">
+                Digital Check In System Admin
+              </span>
             </Link>
             <i
               className="bi bi-list toggle-sidebar-btn"
@@ -142,9 +144,11 @@ const MainRoute = ({ children }) => {
           <ul className="sidebar-nav" id="sidebar-nav">
             {[
               { to: "/", icon: "bi-grid", label: "Dashboard" },
-              { to: "/card-list", icon: "bi-credit-card", label: "Cards" },
+              // { to: "/card-list", icon: "bi-credit-card", label: "Cards" },
               { to: "/category-list", icon: "bi-tags", label: "Category" },
-              
+              { to: "/feeling-list", icon: "bi-tags ", label: "Feeling" },
+              { to: "/guidance-list", icon: "bi-tags", label: "Guidance" },
+              { to: "/kids-list", icon: "bi-tags", label: "Kids" },
             ].map(({ to, icon, label }) => (
               <li className="nav-item" onClick={handleToggle} key={to}>
                 <NavLink
@@ -170,7 +174,7 @@ const MainRoute = ({ children }) => {
           <div className="copyright">
             &copy; Copyright{" "}
             <strong>
-              <span>Heu Admin</span>
+              <span>Digital Check In System</span>
             </strong>
             . All Rights Reserved
           </div>

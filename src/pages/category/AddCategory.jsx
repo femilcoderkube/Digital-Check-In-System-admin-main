@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CategoryForm from "../../components/categoryForm/categoryForm";
 import CommonLayout from "../../components/commonLayout/CommonLayout";
+import { postCall } from "../../utils/api";
 
 const AddCategory = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -11,10 +12,10 @@ const AddCategory = () => {
     setIsLoading(true);
     try {
       console.log("Adding category with values:", values);
-      
+
       // Simulate API call
       // Example: await api.addCategory(values);
-      const response = { success: true }; // mock success response
+      const response = await postCall("/admin/createPrimaryFeeling", values);
 
       if (response.success) {
         navigate("/category-list"); // navigate to category listing page

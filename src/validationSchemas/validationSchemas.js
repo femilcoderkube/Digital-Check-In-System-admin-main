@@ -1,7 +1,7 @@
 import * as yup from "yup";
 
 export const loginSchema = yup.object().shape({
-  username: yup
+  email: yup
     .string()
     // .email("Please enter a valid email")
     .required("Please enter your email"),
@@ -386,8 +386,6 @@ export const termsSchema = yup.object().shape({
     }),
 });
 export const engagementSchema = yup.object().shape({
-  link: yup
-    .string()
-    .url("Please enter a valid URL"),
+  link: yup.string().url("Please enter a valid URL"),
   description: yup.string().required("Description is required"),
 });

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import StatCard from "../../components/commonHomeCard/StatCard";
+import { getCall } from "../../utils/api";
 
 const Home = () => {
   const [data, setData] = useState({});
@@ -9,21 +10,10 @@ const Home = () => {
     const fetchDashboardData = async () => {
       setIsLoading(true);
       try {
-        // Simulate an API call to fetch dashboard data
-        console.log("Fetching dashboard data...");
-        // Here you would typically call your API to get the dashboard data
-        // const response = await api.getDashboard();
-        // Simulate successful response
-        const response = {
-          banks: 10,
-          cards: 50,
-          outlets: 20,
-          users: 100,
-          offers: 5,
-        }; // Mock response
-        setData(response);
+        const response = await getCall("/admin/dashboard");
+        setData(response?.data || {});
       } catch (error) {
-        console.log("Error fetching dashboard data");
+        console.log("Error fetching dashboard data", error);
       } finally {
         setIsLoading(false);
       }
@@ -38,51 +28,49 @@ const Home = () => {
         <h1>Dashboard</h1>
         <section className="section dashboard">
           <div className="row">
-            {/* Left side columns */}
             <div className="col-lg-12">
               <div className="row">
-                {/* Bank Card */}
-                <StatCard
-                  title="Total Banks"
-                  icon="bi bi-bank2"
-                  value={isLoading ? "Loading..." : data.banks}
-                  ClassName="revenue-card home-card"
-                  setNavigate="/bank-list"
-                />
-                {/* End Sales Bank */}
-
-                <StatCard
-                  title="Total Cards"
-                  icon="bi-credit-card"
-                  value={isLoading ? "Loading..." : data.cards}
-                  ClassName="sales-card home-card"
-                  setNavigate="/card-list"
-                />
-
-                <StatCard
-                  title="Total Outlets"
-                  icon="bi-compass-fill"
-                  value={isLoading ? "Loading..." : data.outlets}
-                  ClassName="customers-card home-card"
-                  setNavigate="/outlet-list"
-                />
                 <StatCard
                   title="Total Users"
                   icon="bi-people-fill"
-                  value={isLoading ? "Loading..." : data.users}
+                  value={isLoading ? "Loading..." : data.totalUsers}
                   ClassName="customers-card home-card"
                   setNavigate="/user-list"
                 />
+
                 <StatCard
-                  title="Total Offers"
-                  icon="bi-megaphone"
-                  value={isLoading ? "Loading..." : data.offers}
+                  title="Total Primary Feelings"
+                  icon="bi-emoji-smile"
+                  value={isLoading ? "Loading..." : data.totalPrimaryFeelings}
                   ClassName="revenue-card home-card"
-                  setNavigate="/offer-list"
+                  setNavigate="/primary-feelings"
+                />
+
+                <StatCard
+                  title="Total Secondary Feelings"
+                  icon="bi-emoji-heart-eyes"
+                  value={isLoading ? "Loading..." : data.totalSecondaryFeelings}
+                  ClassName="sales-card home-card"
+                  setNavigate="/secondary-feelings"
+                />
+
+                <StatCard
+                  title="Total Users Feelings"
+                  icon="bi-emoji-dizzy"
+                  value={isLoading ? "Loading..." : data.totalUsersFeelings}
+                  ClassName="customers-card home-card"
+                  setNavigate="/user-feelings"
+                />
+
+                <StatCard
+                  title="Total Guidance"
+                  icon="bi-chat-square-text"
+                  value={isLoading ? "Loading..." : data.totalGuidance}
+                  ClassName="revenue-card home-card"
+                  setNavigate="/guidance-list"
                 />
               </div>
             </div>
-            {/* End Left side columns */}
           </div>
         </section>
       </div>

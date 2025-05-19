@@ -19,7 +19,7 @@ export const setAuthToken = (token) => {
 };
 
 const handleRequest = async (method, url, data, showToast = true) => {
-  const token = JSON.parse(localStorage.getItem('token'));
+  const token = localStorage.getItem("token");
   let headers = {
     Authorization: `Bearer ${token}`,
   };
@@ -43,7 +43,6 @@ const handleRequest = async (method, url, data, showToast = true) => {
     }
 
     return response.data;
-
   } catch (error) {
     let customErrorMessage = "";
 
@@ -52,7 +51,8 @@ const handleRequest = async (method, url, data, showToast = true) => {
         customErrorMessage = "Unable to fetch data. Please try again later.";
         break;
       case "post":
-        customErrorMessage = "Unable to add/update data. Please try again later.";
+        customErrorMessage =
+          "Unable to add/update data. Please try again later.";
         break;
       case "put":
       case "patch":
@@ -62,7 +62,8 @@ const handleRequest = async (method, url, data, showToast = true) => {
         customErrorMessage = "Unable to delete data. Please try again later.";
         break;
       default:
-        customErrorMessage = "An unexpected error occurred. Please try again later.";
+        customErrorMessage =
+          "An unexpected error occurred. Please try again later.";
     }
     const errorMessage =
       error.response?.data?.errors?.name ||
@@ -70,15 +71,20 @@ const handleRequest = async (method, url, data, showToast = true) => {
       error.response?.data?.message?.error ||
       error.response?.data?.errors?.message ||
       error?.response?.data?.message ||
-      customErrorMessage
+      customErrorMessage;
 
     toast.error(errorMessage);
     return Promise.reject(error);
   }
 };
 
-export const getCall = (url, showToast) => handleRequest("get", url, null, showToast);
-export const getById = (url, id, showToast) => handleRequest("get", `${url}/${id}`, null, showToast);
-export const postCall = (url, data, showToast) => handleRequest("post", url, data, showToast);
-export const putCall = (url, data, showToast) => handleRequest("post", url, data, showToast);
-export const deleteCall = (url, data, showToast) => handleRequest("delete", url, data, showToast);
+export const getCall = (url, showToast) =>
+  handleRequest("get", url, null, false);
+export const getById = (url, id, showToast) =>
+  handleRequest("get", `${url}=${id}`, null, showToast);
+export const postCall = (url, data, showToast) =>
+  handleRequest("post", url, data, showToast);
+export const putCall = (url, data, showToast) =>
+  handleRequest("put", url, data, showToast);
+export const deleteCall = (url, data, showToast) =>
+  handleRequest("delete", url, data, showToast);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import CommonView from "../../components/commonView/CommonView";
+import { getById } from "../../utils/api";
 
 const ViewCategory = () => {
   const { id } = useParams();
@@ -11,20 +12,16 @@ const ViewCategory = () => {
     const fetchCategory = async () => {
       setIsLoading(true);
       try {
-        // Simulate API call to fetch category by ID
-        console.log("Fetching category data for ID:", id);
-        // Replace with real API call: const response = await api.getCategoryById(id);
-        const response = {
-          data: {
-            id,
-            photoTitle: "Nature",
-            photoDescription: "Photos of natural landscapes, forests, and wildlife.",
-            image: "https://via.placeholder.com/150", // if you have an image
-          },
-        };
-        setCategoryData(response.data);
+        const response = await getById(
+          "/admin/getPrimaryFeelingByID?primary_feeling_id",
+          id,
+          false
+        );
+        setCategoryData(response?.data || {}); // Set the response data
+        console.log("res", response);
       } catch (error) {
-        console.log("Error fetching category data");
+        console.log("Error fetching category data", error);
+        setCategoryData({});
       } finally {
         setIsLoading(false);
       }
@@ -33,19 +30,20 @@ const ViewCategory = () => {
     fetchCategory();
   }, [id]);
 
-  const { image, photoTitle, photoDescription } = categoryData;
+  const { name, icon, color_code, status, createdAt } = categoryData;
 
   const data = [
-    { key: "Category Title", value: photoTitle },
-    { key: "Description", value: photoDescription },
+    { key: "Category Name", value: name || "N/A" },
+    { key: "Color Code", value: color_code || "N/A" },
+    { key: "Status", value: status || "N/A" },
   ];
 
   return (
     <CommonView
       title="Category Details"
-      image={image}
-      name={photoTitle}
-      data={data}
+      image={icon} // Use 'icon' as the image
+      name={name} // Use 'name' for the name prop
+      data={data} // Pass the key-value pairs
       isLoading={isLoading}
     />
   );
