@@ -2,10 +2,13 @@ import React from "react";
 import CountUp from "react-countup";
 import { useNavigate } from "react-router-dom";
 
-const StatisticCard = ({ title, icon, value, ClassName,setNavigate }) => {
-  const navigate=useNavigate()
+const StatisticCard = ({ title, icon, value, ClassName, setNavigate }) => {
+  const navigate = useNavigate();
   return (
-    <div className="col-lg-4 col-md-6 col-sm-12" onClick={()=>navigate(setNavigate)}>
+    <div
+      className="col-lg-4 col-md-6 col-sm-12"
+      onClick={() => navigate(setNavigate)}
+    >
       <div className={`card info-card ${ClassName}`}>
         <div className="card-body">
           <h5 className="card-title">{title}</h5>

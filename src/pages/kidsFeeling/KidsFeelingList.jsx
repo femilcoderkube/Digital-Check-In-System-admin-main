@@ -41,30 +41,32 @@ const KidsFeelingList = () => {
       const response = await getCall(
         `/kidsFeelings/getAllKidsFeelings?search=${inputValue}`
       );
-      
+
       // Process the response to extract secondary kids
       let processedData = [];
       if (response?.data) {
         // If a single object with secondary_kids array
         if (!Array.isArray(response.data) && response.data.secondary_kids) {
           processedData = response.data.secondary_kids;
-        } 
+        }
         // If an array of objects with secondary_kids arrays
         else if (Array.isArray(response.data)) {
-          response.data.forEach(item => {
+          response.data.forEach((item) => {
             if (item.secondary_kids && Array.isArray(item.secondary_kids)) {
               processedData = [...processedData, ...item.secondary_kids];
             } else {
               processedData.push(item);
             }
           });
-        } 
+        }
         // If direct array of secondary kids
         else {
-          processedData = Array.isArray(response.data) ? response.data : [response.data];
+          processedData = Array.isArray(response.data)
+            ? response.data
+            : [response.data];
         }
       }
-      
+
       setData(processedData);
       console.log("Processed data:", processedData);
     } catch (error) {
@@ -161,34 +163,26 @@ const KidsFeelingList = () => {
       ),
     },
     {
-      key: "feelingName",
-      label: "Feeling Name",
-      render: (item) => item.name,
+      key: "kid_id",
+      label: "Kids",
+      render: (item) =>
+        item?.kid_id?.first_name + " " + item?.kid_id?.last_name || "N/A",
     },
     {
-      key: "status",
-      label: "Status",
-      render: (item) => item.status,
+      key: "primary_feeling_id",
+      label: "Primary Feeling",
+      render: (item) => item?.primary_feeling_id?.name || "N/A",
     },
     {
-      key: "icon",
-      label: "Icon",
-      render: (item) => 
-        item.icon ? (
-          <img 
-            src={item.icon} 
-            alt={item.name} 
-            style={{ width: "40px", height: "40px" }} 
-          />
-        ) : (
-          "No Icon"
-        )
+      key: "secondary_feeling_id",
+      label: "Secondary Feeling",
+      render: (item) => item?.secondary_feeling_id?.name || "N/A",
     },
   ];
 
   return (
     <>
-      <CommonLayout title="Secondary kids List">
+      <CommonLayout title="Kids feeling List">
         <div className="search-main mb-3">
           <CommonSearchBar
             searchQuery={inputValue}
@@ -201,7 +195,8 @@ const KidsFeelingList = () => {
                 onClick={() => showDeleteConfirmation(selectedIds)}
               />
             ) : (
-              <AddLinkButton to="/add-kids-feeling" />
+              // <AddLinkButton to="/add-kids-feeling" />
+              ""
             )}
           </div>
         </div>
@@ -212,9 +207,9 @@ const KidsFeelingList = () => {
           isLoading={status === "loading"}
           actions={(item) => (
             <>
-              <EditButton
+              {/* <EditButton
                 onClick={() => navigate(`/edit-feeling/${item._id}`)}
-              />
+              /> */}
               <ViewButton
                 onClick={() => navigate(`/view-feeling/${item._id}`)}
               />
@@ -252,4 +247,4 @@ const KidsFeelingList = () => {
   );
 };
 
-export default KidsFeelingList; 
+export default KidsFeelingList;

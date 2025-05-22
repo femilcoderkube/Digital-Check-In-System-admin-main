@@ -18,6 +18,7 @@ import { deleteCall, getCall } from "../../utils/api";
 
 const GuidanceList = () => {
   const [data, setData] = useState([]);
+  const [dataPagination, setDataPagination] = useState([]);
   const [status, setStatus] = useState("idle");
   const [deleteId, setDeleteId] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -34,13 +35,17 @@ const GuidanceList = () => {
     handlePageChange,
     total,
     lastPage,
-  } = usePaginationData({ total: 0, per_page: 10, last_page: 1 });
+  } = usePaginationData({
+    total: dataPagination?.totalCount || 0,
+    per_page: dataPagination?.pageSize || 10,
+    last_page: dataPagination?.totalPages || 1,
+  });
 
   const fetchData = async () => {
     setStatus("loading");
     try {
       const response = await getCall(
-        `/guidance/getGuidance?page=${currentPage}&limit=${perPage}&search=${inputValue}`,
+        `/guidance/getGuidance?page=${currentPage}&limit=${perPage}&search=${inputValue}&page=${currentPage}&per_page=${perPage}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -48,10 +53,13 @@ const GuidanceList = () => {
         }
       );
       setData(response?.data || []);
+      setDataPagination(response);
+
       console.log("response", response?.data);
     } catch (error) {
       console.error("Error fetching guidance data", error);
       setData([]);
+      setDataPagination([]);
     } finally {
       setStatus("succeeded");
     }
@@ -102,7 +110,7 @@ const GuidanceList = () => {
   const handleSelectAllOnPage = (e) => {
     const allIdsOnPage = data?.map((item) => item._id) || [];
     if (e.target.checked) {
-    //   InflatedTableCell from "@mui/material";
+      //   InflatedTableCell from "@mui/material";
       setSelectedIds((prev) => [...new Set([...prev, ...allIdsOnPage])]);
     } else {
       setSelectedIds((prev) => prev.filter((id) => !allIdsOnPage.includes(id)));
@@ -151,8 +159,15 @@ const GuidanceList = () => {
     {
       key: "description",
       label: "Description",
-      render: (item) => item.description,
+      render: (item) => (
+        <div dangerouslySetInnerHTML={{ __html: item.description }} />
+      ),
     },
+    // {
+    //   key: "description",
+    //   label: "Description",
+    //   render: (item) => item.description,
+    // },
   ];
 
   return (
@@ -180,7 +195,7 @@ const GuidanceList = () => {
           data={data}
           isLoading={status === "loading"}
           actions={(item) => (
-           <>
+            <>
               <EditButton
                 onClick={() => navigate(`/edit-guidance/${item._id}`)}
               />
@@ -195,13 +210,13 @@ const GuidanceList = () => {
 
         {data?.length > 0 && (
           <PaginationData
-            currentPage={currentPage}
-            perPage={perPage}
+            currentPage={dataPagination?.currentPage}
+            perPage={dataPagination?.pageSize}
             handleRowsPerPageChange={handleRowsPerPageChange}
             rowsPerPageOptions={rowsPerPageOptions}
             handlePageChange={handlePageChange}
-            totalPage={total}
-            lastPage={lastPage}
+            totalPage={dataPagination?.totalCount}
+            lastPage={dataPagination?.totalPages || 1}
           />
         )}
       </CommonLayout>

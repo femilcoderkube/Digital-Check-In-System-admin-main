@@ -37,7 +37,7 @@ const CommonView = ({ title, image, name, data, user, isLoading }) => {
                     />
                   </svg>
                 ) : (
-                 ""
+                  ""
                 )}
 
                 <h6>
@@ -58,9 +58,13 @@ const CommonView = ({ title, image, name, data, user, isLoading }) => {
                       <div className="row" key={idx}>
                         <div className="col-lg-2 col-md-4 label">{key}</div>
                         <div className="col-lg-10 col-md-8">
-                          {isLoading === "loading"
-                            ? "Loading..."
-                            : value || "N/A"}
+                          {isLoading === "loading" ? (
+                            "Loading..."
+                          ) : key === "Description" ? (
+                            <div dangerouslySetInnerHTML={{ __html: value }} />
+                          ) : (
+                            value || "N/A"
+                          )}
                         </div>
                       </div>
                     ))}

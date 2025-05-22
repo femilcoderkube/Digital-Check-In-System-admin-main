@@ -18,6 +18,7 @@ import { deleteCall, getCall } from "../../utils/api";
 
 const CategoryList = () => {
   const [data, setData] = useState([]);
+  const [dataPagination, setDataPagination] = useState([]);
   const [status, setStatus] = useState("idle");
   const [deleteId, setDeleteId] = useState(null); // For single deletion
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -32,20 +33,26 @@ const CategoryList = () => {
     handleRowsPerPageChange,
     rowsPerPageOptions,
     handlePageChange,
-  } = usePaginationData({ total: 0, per_page: 10, last_page: 1 });
+  } = usePaginationData({
+    total: dataPagination?.totalCount || 0,
+    per_page: dataPagination?.pageSize || 10,
+    last_page: dataPagination?.totalPages || 1,
+  });
 
   // Fetch data
   const fetchData = async () => {
     setStatus("loading");
     try {
       const response = await getCall(
-        `/admin/getPrimaryFeelings?search=${inputValue}`
+        `/admin/getPrimaryFeelings?search=${inputValue}&page=${currentPage}&per_page=${perPage}`
       );
       setData(response?.data || []);
-      console.log("response", response?.data);
+      setDataPagination(response);
+      console.log("response", response);
     } catch (error) {
       console.error("Error fetching data", error);
       setData([]);
+      setDataPagination([]);
     } finally {
       setStatus("succeeded");
     }
@@ -151,6 +158,21 @@ const CategoryList = () => {
       label: "Color Code",
       render: (item) => item.color_code,
     },
+    {
+      key: "icon",
+      label: "Icon",
+      render: (item) =>
+        item.icon ? (
+          <img
+            key={item?._id}
+            src={item.icon}
+            alt={item.name}
+            style={{ width: "40px", height: "40px" }}
+          />
+        ) : (
+          "No Icon"
+        ),
+    },
   ];
 
   return (
@@ -194,17 +216,17 @@ const CategoryList = () => {
         />
 
         {/* Uncomment and update if pagination is needed */}
-        {/* {data?.length > 0 && (
+        {data?.length > 0 && (
           <PaginationData
-            currentPage={currentPage}
-            perPage={perPage}
+            currentPage={dataPagination?.currentPage}
+            perPage={dataPagination?.pageSize}
             handleRowsPerPageChange={handleRowsPerPageChange}
             rowsPerPageOptions={rowsPerPageOptions}
             handlePageChange={handlePageChange}
-            totalPage={data.length}
-            lastPage={1}
+            totalPage={dataPagination?.totalCount}
+            lastPage={dataPagination?.totalPages || 1}
           />
-        )} */}
+        )}
       </CommonLayout>
 
       <DeleteConfirmationModal

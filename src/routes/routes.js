@@ -1,6 +1,21 @@
 export const routes = [
   { path: "/login", component: "auth/login/Login", isPublic: true },
   { path: "/", component: "dashboard/Home" },
+  {
+    path: "/send-email",
+    component: "auth/sendEmail/SendEmail",
+    isPublic: true,
+  },
+  {
+    path: "/forgot-password",
+    component: "auth/forgotPassword/ForgotPassword",
+    isPublic: true,
+  },
+  {
+    path: "/reset-password",
+    component: "auth/resetPassword/ResetPassword",
+    isPublic: true,
+  },
 
   // { path: "/card-list", component: "card/CardList" },
 
@@ -32,4 +47,6 @@ export const routes = [
   { path: "/add-feeling", component: "feeling/AddFeeling" },
   { path: "/edit-feeling/:id", component: "feeling/EditFeeling" },
   { path: "/view-feeling/:id", component: "feeling/ViewFeeling" },
+
+  { path: "/profile", component: "profile/Profile" },
 ];

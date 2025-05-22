@@ -24,14 +24,30 @@ export const otpCodeSchema = yup.object().shape({
 
 export const changePasswordSchema = yup.object({
   currentPassword: yup.string().required("Current password is required"),
+
   newPassword: yup
     .string()
     .min(8, "Password must be at least 8 characters")
-    .required("New password is required"),
+    .max(20, "Password must be at most 20 characters") // Max characters allowed
+    .required("New password is required")
+    .test(
+      "no-leading-trailing-spaces",
+      "Password cannot start or end with a space",
+      (value) => value && !/^\s|\s$/.test(value)
+    )
+    .test(
+      "max-special-chars",
+      "Password can have at most 4 special characters",
+      (value) => {
+        if (!value) return true;
+        const specialChars = value.match(/[^a-zA-Z0-9]/g) || [];
+        return specialChars.length <= 4;
+      }
+    ),
+
   confirmNewPassword: yup
     .string()
-    .oneOf([yup.ref("newPassword"), null], "New password must match")
-    .required("Re-enter new password is required"),
+    .oneOf([yup.ref("newPassword"), null], "New password must match"),
 });
 
 export const forgotPasswordSchema = yup.object({
@@ -344,9 +360,9 @@ export const profileSchema = yup.object().shape({
     .string()
     .matches(/^[a-zA-Z\s]*$/, "Last name cannot contain special characters")
     .required("Please enter last name"),
-  contact_no: yup
-    .string()
-    .matches(/^\d{10}$/, "Contact number must be exactly 10 digits"),
+  // contact_no: yup
+  //   .string()
+  //   .matches(/^\d{10}$/, "Contact number must be exactly 10 digits"),
 });
 
 export const notificationSchema = yup.object().shape({

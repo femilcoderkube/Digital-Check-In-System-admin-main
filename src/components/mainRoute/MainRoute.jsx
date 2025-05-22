@@ -2,30 +2,41 @@ import React, { useEffect, useState } from "react";
 import logo from "../../assets/img/logo.png";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import PrivateRoute from "../../routes/privateRoute/PrivateRoute";
+import { getById } from "../../utils/api";
 
 const MainRoute = ({ children }) => {
   // hooks
   const navigate = useNavigate();
-
+  const userid = JSON.parse(localStorage.getItem("adminData"));
+  console.log("userid", userid);
   // state hooks
   const [isActive, setIsActive] = useState(false);
   const [user, setUser] = useState(null); // State to hold user data
 
   // Simulate fetching user data
   useEffect(() => {
-    const fetchUserData = () => {
-      // Simulated user data
-      const dummyUser = {
-        first_name: "John",
-        last_name: "Doe",
-        email: "john.doe@example.com",
-        image: logo,
-      };
-      setUser(dummyUser);
+    const fetchData = async () => {
+      try {
+        const response = await getById(
+          "/admin/getProfile?admin_id",
+          userid?._id,
+          false
+        );
+        console.log("response", response?.data);
+        if (response?.data) {
+          setUser(response?.data);
+        }
+      } catch (error) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("adminData");
+        navigate("/login");
+        console.log("err", error);
+      }
     };
-
-    fetchUserData();
-  }, []);
+    if (userid?._id) {
+      fetchData();
+    }
+  }, [userid?._id]);
 
   const isMobileView = () => window.innerWidth <= 768;
 
@@ -42,6 +53,7 @@ const MainRoute = ({ children }) => {
     // Dummy implementation
     console.log("User logged out");
     localStorage.removeItem("token");
+    localStorage.removeItem("adminData");
     // Optionally navigate to login page if needed
     navigate("/login");
   };
@@ -78,9 +90,9 @@ const MainRoute = ({ children }) => {
                   to="#"
                   data-bs-toggle="dropdown"
                 >
-                  {user?.image ? (
+                  {user?.profile_photo ? (
                     <img
-                      src={user.image}
+                      src={user.profile_photo}
                       alt="Profile"
                       className="rounded-circle"
                       width={30}

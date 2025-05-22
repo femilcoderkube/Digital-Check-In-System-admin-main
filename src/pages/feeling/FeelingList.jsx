@@ -18,6 +18,7 @@ import { deleteCall, getCall } from "../../utils/api";
 
 const FeelingList = () => {
   const [data, setData] = useState([]);
+  const [dataPagination, setDataPagination] = useState([]);
   const [status, setStatus] = useState("idle");
   const [deleteId, setDeleteId] = useState(null); // For single deletion
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -32,44 +33,56 @@ const FeelingList = () => {
     handleRowsPerPageChange,
     rowsPerPageOptions,
     handlePageChange,
-  } = usePaginationData({ total: 0, per_page: 10, last_page: 1 });
+  } = usePaginationData({
+    total: dataPagination?.totalCount || 0,
+    per_page: dataPagination?.pageSize || 10,
+    last_page: dataPagination?.totalPages || 1,
+  });
 
   // Fetch data
   const fetchData = async () => {
     setStatus("loading");
     try {
       const response = await getCall(
-        `/admin/getAllSecondaryFeelings?search=${inputValue}`
+        `/admin/getAllSecondaryFeelings?search=${inputValue}&page=${currentPage}&per_page=${perPage}`
       );
-      
+
       // Process the response to extract secondary feelings
       let processedData = [];
       if (response?.data) {
         // If a single object with secondary_feelings array
+        setDataPagination(response);
         if (!Array.isArray(response.data) && response.data.secondary_feelings) {
           processedData = response.data.secondary_feelings;
-        } 
+        }
         // If an array of objects with secondary_feelings arrays
         else if (Array.isArray(response.data)) {
-          response.data.forEach(item => {
-            if (item.secondary_feelings && Array.isArray(item.secondary_feelings)) {
+          response.data.forEach((item) => {
+            if (
+              item.secondary_feelings &&
+              Array.isArray(item.secondary_feelings)
+            ) {
               processedData = [...processedData, ...item.secondary_feelings];
             } else {
               processedData.push(item);
             }
           });
-        } 
+        }
         // If direct array of secondary feelings
         else {
-          processedData = Array.isArray(response.data) ? response.data : [response.data];
+          processedData = Array.isArray(response.data)
+            ? response.data
+            : [response.data];
         }
       }
-      
+
       setData(processedData);
+
       console.log("Processed data:", processedData);
     } catch (error) {
       console.error("Error fetching data", error);
       setData([]);
+      setDataPagination([]);
     } finally {
       setStatus("succeeded");
     }
@@ -166,6 +179,11 @@ const FeelingList = () => {
       render: (item) => item.name,
     },
     {
+      key: "primary_feeling_id",
+      label: "Category Name",
+      render: (item) => item.primary_feeling_id.name,
+    },
+    {
       key: "status",
       label: "Status",
       render: (item) => item.status,
@@ -173,16 +191,16 @@ const FeelingList = () => {
     {
       key: "icon",
       label: "Icon",
-      render: (item) => 
+      render: (item) =>
         item.icon ? (
-          <img 
-            src={item.icon} 
-            alt={item.name} 
-            style={{ width: "40px", height: "40px" }} 
+          <img
+            src={item.icon}
+            alt={item.name}
+            style={{ width: "40px", height: "40px" }}
           />
         ) : (
           "No Icon"
-        )
+        ),
     },
   ];
 
@@ -224,17 +242,17 @@ const FeelingList = () => {
         />
 
         {/* Uncomment and update if pagination is needed */}
-        {/* {data?.length > 0 && (
+        {data?.length > 0 && (
           <PaginationData
-            currentPage={currentPage}
-            perPage={perPage}
+            currentPage={dataPagination?.currentPage}
+            perPage={dataPagination?.pageSize}
             handleRowsPerPageChange={handleRowsPerPageChange}
             rowsPerPageOptions={rowsPerPageOptions}
             handlePageChange={handlePageChange}
-            totalPage={data.length}
-            lastPage={1}
+            totalPage={dataPagination?.totalCount}
+            lastPage={dataPagination?.totalPages || 1}
           />
-        )} */}
+        )}
       </CommonLayout>
 
       <DeleteConfirmationModal
@@ -252,4 +270,4 @@ const FeelingList = () => {
   );
 };
 
-export default FeelingList; 
+export default FeelingList;

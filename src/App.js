@@ -2,7 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { lazy, startTransition, Suspense, useEffect } from "react";
 import { Toaster } from "react-hot-toast";
 import { routes } from "./routes/routes";
-
+import "../src/assets/css/selectedStyles.css";
 const Loader = lazy(() => import("./components/loader/Loader"));
 const MainRoute = lazy(() => import("./components/mainRoute/MainRoute"));
 const PublicRoute = lazy(() => import("./routes/publicRoute/PublicRoute"));

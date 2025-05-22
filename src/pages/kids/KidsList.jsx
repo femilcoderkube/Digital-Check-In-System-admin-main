@@ -18,6 +18,7 @@ import { deleteCall, getCall } from "../../utils/api";
 
 const KidsLis = () => {
   const [data, setData] = useState([]);
+  const [dataPagination, setDataPagination] = useState([]);
   const [status, setStatus] = useState("idle");
   const [deleteId, setDeleteId] = useState(null); // For single deletion
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -32,23 +33,27 @@ const KidsLis = () => {
     handleRowsPerPageChange,
     rowsPerPageOptions,
     handlePageChange,
-  } = usePaginationData({ total: 0, per_page: 10, last_page: 1 });
+  } = usePaginationData({
+    total: dataPagination?.totalCount || 0,
+    per_page: dataPagination?.pageSize || 10,
+    last_page: dataPagination?.totalPages || 1,
+  });
 
   // Fetch data
   const fetchData = async () => {
     setStatus("loading");
     try {
       const response = await getCall(
-        `/kids/getKids?search=${inputValue}`
+        `/kids/getKids?search=${inputValue}&page=${currentPage}&per_page=${perPage}`
       );
-      
+
       // Process the response to extract secondary kids
       let processedData = [];
       // if (response?.data) {
       //   // If a single object with secondary_kids array
       //   if (!Array.isArray(response.data) && response.data) {
       //     processedData = response.data;
-      //   } 
+      //   }
       //   // If an array of objects with secondary_kids arrays
       //   else if (Array.isArray(response.data)) {
       //     response.data.forEach(item => {
@@ -58,18 +63,20 @@ const KidsLis = () => {
       //         processedData.push(item);
       //       }
       //     });
-      //   } 
+      //   }
       //   // If direct array of secondary kids
       //   else {
       //     processedData = Array.isArray(response.data) ? response.data : [response.data];
       //   }
       // }
-      
+
       setData(response?.data);
+      setDataPagination(response);
       console.log("Processed data:", processedData);
     } catch (error) {
       console.error("Error fetching data", error);
       setData([]);
+      setDataPagination([]);
     } finally {
       setStatus("succeeded");
     }
@@ -91,9 +98,7 @@ const KidsLis = () => {
 
       // Perform deletion for each ID
       await Promise.all(
-        idsToDelete.map((id) =>
-          deleteCall(`/kids/deleteKids?kid_id=${id}`)
-        )
+        idsToDelete.map((id) => deleteCall(`/kids/deleteKids?kid_id=${id}`))
       );
 
       // Update local state to remove deleted items
@@ -180,17 +185,16 @@ const KidsLis = () => {
     //   label: "City",
     //   render: (item) => item.city,
     // },
-   
-    
+
     // {
     //   key: "profile_photo",
     //   label: "Profile Photo",
-    //   render: (item) => 
+    //   render: (item) =>
     //     item.profile_photo ? (
-    //       <img 
-    //         src={item.profile_photo} 
-    //         alt={item.name} 
-    //         style={{ width: "40px", height: "40px" }} 
+    //       <img
+    //         src={item.profile_photo}
+    //         alt={item.name}
+    //         style={{ width: "40px", height: "40px" }}
     //       />
     //     ) : (
     //       "No Icon"
@@ -200,12 +204,12 @@ const KidsLis = () => {
 
   return (
     <>
-      <CommonLayout title="kids List">
+      <CommonLayout title="Kids List">
         <div className="search-main mb-3">
           <CommonSearchBar
             searchQuery={inputValue}
             setSearchQuery={handleInputChange}
-            placeholder="Search feeling"
+            placeholder="Search username"
           />
           <div className="btn-container">
             {selectedIds.length > 0 ? (
@@ -213,7 +217,8 @@ const KidsLis = () => {
                 onClick={() => showDeleteConfirmation(selectedIds)}
               />
             ) : (
-              <AddLinkButton to="/add-kids" />
+              <></>
+              // <AddLinkButton to="/add-kids" />
             )}
           </div>
         </div>
@@ -224,29 +229,25 @@ const KidsLis = () => {
           isLoading={status === "loading"}
           actions={(item) => (
             <>
-              <EditButton
-                onClick={() => navigate(`/edit-kids/${item._id}`)}
-              />
-              <ViewButton
-                onClick={() => navigate(`/view-kids/${item._id}`)}
-              />
+              <EditButton onClick={() => navigate(`/edit-kids/${item._id}`)} />
+              <ViewButton onClick={() => navigate(`/view-kids/${item._id}`)} />
               <DeleteButton onClick={() => showDeleteConfirmation(item._id)} />
             </>
           )}
         />
 
         {/* Uncomment and update if pagination is needed */}
-        {/* {data?.length > 0 && (
+        {data?.length > 0 && (
           <PaginationData
-            currentPage={currentPage}
-            perPage={perPage}
+            currentPage={dataPagination?.currentPage}
+            perPage={dataPagination?.pageSize}
             handleRowsPerPageChange={handleRowsPerPageChange}
             rowsPerPageOptions={rowsPerPageOptions}
             handlePageChange={handlePageChange}
-            totalPage={data.length}
-            lastPage={1}
+            totalPage={dataPagination?.totalCount}
+            lastPage={dataPagination?.totalPages || 1}
           />
-        )} */}
+        )}
       </CommonLayout>
 
       <DeleteConfirmationModal
@@ -264,4 +265,4 @@ const KidsLis = () => {
   );
 };
 
-export default KidsLis; 
+export default KidsLis;

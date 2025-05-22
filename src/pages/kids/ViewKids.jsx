@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import CommonView from "../../components/commonView/CommonView";
 import { getById, getCall } from "../../utils/api";
 import CommonTable from "../../components/commonTable/CommonTable";
+import moment from "moment/moment";
 
 const ViewKids = () => {
   const { id } = useParams();
@@ -17,12 +18,12 @@ const ViewKids = () => {
     primary_feeling_id: "",
     secondary_feeling_id: "",
     startDate: "",
-    endDate: ""
+    endDate: "",
   });
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
-    total: 0
+    total: 0,
   });
 
   // Fetch primary feelings
@@ -31,7 +32,9 @@ const ViewKids = () => {
       setFetchStatus("loading");
       try {
         const primaryResponse = await getCall("/admin/getPrimaryFeelings");
-        setPrimaryFeelings(Array.isArray(primaryResponse?.data) ? primaryResponse.data : []);
+        setPrimaryFeelings(
+          Array.isArray(primaryResponse?.data) ? primaryResponse.data : []
+        );
       } catch (error) {
         console.error("Error fetching primary feelings:", error);
         setPrimaryFeelings([]);
@@ -49,12 +52,13 @@ const ViewKids = () => {
       setSecondaryFeelings([]);
       return;
     }
-    
+
     setIsLoadingSecondary(true);
     try {
-      const secondaryResponse = await getCall(`/admin/getSecondaryFeelingsBasedOnPrimaryFeeling?primary_feeling_id=${primaryId}`);
-      const secondaryFeelingsData = secondaryResponse?.data || [];
-      setSecondaryFeelings(secondaryFeelingsData);
+      const secondaryResponse = await getCall(
+        `/admin/getSecondaryFeelingsBasedOnPrimaryFeeling?primary_feeling_id=${primaryId}`
+      );
+      setSecondaryFeelings(secondaryResponse?.data || []);
     } catch (error) {
       console.error("Error fetching secondary feelings:", error);
       setSecondaryFeelings([]);
@@ -66,34 +70,39 @@ const ViewKids = () => {
   // Handle primary feeling change
   const handlePrimaryFeelingChange = (e) => {
     const primaryId = e.target.value;
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
       primary_feeling_id: primaryId,
-      secondary_feeling_id: "" // Reset secondary feeling
+      secondary_feeling_id: "",
     }));
-    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page
+    setPagination((prev) => ({ ...prev, page: 1 }));
     fetchSecondaryFeelings(primaryId);
   };
 
   // Handle filter changes
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
   // Handle page change
   const handlePageChange = (newPage) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
+    if (
+      newPage >= 1 &&
+      newPage <= Math.ceil(pagination.total / pagination.limit)
+    ) {
+      setPagination((prev) => ({ ...prev, page: newPage }));
+    }
   };
 
   // Handle limit change
   const handleLimitChange = (e) => {
-    const newLimit = parseInt(e.target.value);
-    setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
+    const newLimit = parseInt(e.target.value, 10);
+    setPagination((prev) => ({ ...prev, limit: newLimit, page: 1 }));
   };
 
   // Fetch kids data with filters and pagination
@@ -103,63 +112,55 @@ const ViewKids = () => {
       // Build query parameters
       const queryParams = new URLSearchParams();
       if (filters.primary_feeling_id) {
-        queryParams.append('primary_feeling_search', filters.primary_feeling_id);
+        queryParams.append(
+          "primary_feeling_search",
+          filters.primary_feeling_id
+        );
       }
       if (filters.secondary_feeling_id) {
-        queryParams.append('secondary_feeling_search', filters.secondary_feeling_id);
+        queryParams.append(
+          "secondary_feeling_search",
+          filters.secondary_feeling_id
+        );
       }
       if (filters.startDate) {
-        queryParams.append('start_date', filters.startDate);
+        queryParams.append("start_date", filters.startDate);
       }
       if (filters.endDate) {
-        queryParams.append('end_date', filters.endDate);
+        queryParams.append("end_date", filters.endDate);
       }
-      
-      // Add pagination parameters
-      queryParams.append('page', pagination.page);
-      queryParams.append('limit', pagination.limit);
+      queryParams.append("page", pagination.page);
+      queryParams.append("limit", pagination.limit);
 
       // Fetch kids data
-      const response = await getById("/kids/getKidsByID?kid_id", id, false);
-      
-      // Fetch kids feelings with filters and pagination
-      const response1 = await getCall(
-        `/kidsFeelings/getKidsFeelingById?kid_feeling_id=${id}&${queryParams.toString()}`,
-        false
-      );
+      const [kidsResponse, feelingsResponse] = await Promise.all([
+        getById("/kids/getKidsByID?kid_id", id, false),
+        getCall(
+          `/kidsFeelings/getKidsFeelingByKidId?kid_id=${id}&${queryParams.toString()}`,
+          false
+        ),
+      ]);
 
-      if (response1 && response1.data) {
-        setKidsLogData(response1.data || []);
-        if (response1.data.total) {
-          setPagination(prev => ({ ...prev, total: response1.data.total }));
-        }
-      } else {
-        setKidsLogData([]);
-      }
-
-      if (response && response.data) {
-        setKidsData(response.data);
-      } else {
-        setKidsData({});
-      }
+      setKidsData(kidsResponse?.data || {});
+      setKidsLogData(feelingsResponse?.data || []);
+      setPagination((prev) => ({
+        ...prev,
+        total: feelingsResponse?.pagination?.totalRecords || 0,
+      }));
     } catch (error) {
-      console.log("Error fetching Kids data", error);
+      console.error("Error fetching kids data:", error);
       setKidsData({});
       setKidsLogData([]);
+      setPagination((prev) => ({ ...prev, total: 0 }));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Initial data fetch
+  // Initial data fetch and when filters/pagination change
   useEffect(() => {
     fetchKidsData();
-  }, [id]);
-
-  // Fetch data when filters or pagination changes
-  useEffect(() => {
-    fetchKidsData();
-  }, [filters, pagination.page, pagination.limit]);
+  }, [id, filters, pagination.page, pagination.limit]);
 
   // Extract properties directly from kidsData
   const { username, first_name, last_name } = kidsData;
@@ -174,24 +175,33 @@ const ViewKids = () => {
     {
       key: "checkinDate",
       label: "Check In",
-      render: (item) => item.checkinDate,
+      render: (item) =>
+        moment(item?.checkinDate).format("MMMM D, YYYY [at] h:mm A"),
     },
     {
       key: "primary_feeling_id",
       label: "Primary Name",
-      render: (item) => item.primary_feeling_id.name,
+      render: (item) => item.primary_feeling_id?.name || "N/A",
     },
     {
       key: "secondary_feeling_id",
       label: "Secondary Feeling",
-      render: (item) => item.secondary_feeling_id.name,
+      render: (item) => item.secondary_feeling_id?.name || "N/A",
     },
     {
       key: "is_enable_want_to_talk_someone",
       label: "Want To Talk",
-      render: (item) => item.is_enable_want_to_talk_someone,
-    }
+      render: (item) => item.is_enable_want_to_talk_someone || "N/A",
+    },
   ];
+
+  // Calculate the range of records being displayed
+  const startRecord = (pagination.page - 1) * pagination.limit + 1;
+  const endRecord = Math.min(
+    pagination.page * pagination.limit,
+    pagination.total
+  );
+  const totalPages = Math.ceil(pagination.total / pagination.limit);
 
   return (
     <>
@@ -207,49 +217,66 @@ const ViewKids = () => {
         <div className="card-body">
           <h5 className="card-title">Filters</h5>
           <div className="row">
-            {/* Primary Feeling Filter */}
             <div className="col-md-3 mb-3">
-              <label htmlFor="primary_feeling_id" className="form-label">Primary Feeling</label>
-              <select
-                id="primary_feeling_id"
-                name="primary_feeling_id"
-                className="form-control"
-                value={filters.primary_feeling_id}
-                onChange={handlePrimaryFeelingChange}
-                disabled={fetchStatus === "loading"}
-              >
-                <option value="">All Primary Feelings</option>
-                {primaryFeelings.map((feeling) => (
-                  <option key={feeling._id} value={feeling._id}>
-                    {feeling.name}
-                  </option>
-                ))}
-              </select>
+              <label htmlFor="primary_feeling_id" className="form-label">
+                Primary Feeling
+              </label>
+              <div className="select-wrapper">
+                <select
+                  id="primary_feeling_id"
+                  name="primary_feeling_id"
+                  className="form-control"
+                  value={filters.primary_feeling_id}
+                  onChange={handlePrimaryFeelingChange}
+                  disabled={fetchStatus === "loading"}
+                >
+                  <option value="">All Primary Feelings</option>
+                  {primaryFeelings.map((feeling) => (
+                    <option key={feeling._id} value={feeling._id}>
+                      {feeling.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="dropdown-icon">
+                  <i className="bi bi-chevron-down"></i>
+                </span>
+              </div>
             </div>
 
-            {/* Secondary Feeling Filter */}
             <div className="col-md-3 mb-3">
-              <label htmlFor="secondary_feeling_id" className="form-label">Secondary Feeling</label>
-              <select
-                id="secondary_feeling_id"
-                name="secondary_feeling_id"
-                className="form-control"
-                value={filters.secondary_feeling_id}
-                onChange={handleFilterChange}
-                disabled={fetchStatus === "loading" || isLoadingSecondary || !filters.primary_feeling_id}
-              >
-                <option value="">All Secondary Feelings</option>
-                {secondaryFeelings.map((feeling) => (
-                  <option key={feeling._id} value={feeling._id}>
-                    {feeling.name}
-                  </option>
-                ))}
-              </select>
+              <label htmlFor="secondary_feeling_id" className="form-label">
+                Secondary Feeling
+              </label>
+              <div className="select-wrapper">
+                <select
+                  id="secondary_feeling_id"
+                  name="secondary_feeling_id"
+                  className="form-control"
+                  value={filters.secondary_feeling_id}
+                  onChange={handleFilterChange}
+                  disabled={
+                    fetchStatus === "loading" ||
+                    isLoadingSecondary ||
+                    !filters.primary_feeling_id
+                  }
+                >
+                  <option value="">All Secondary Feelings</option>
+                  {secondaryFeelings.map((feeling) => (
+                    <option key={feeling._id} value={feeling._id}>
+                      {feeling.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="dropdown-icon">
+                  <i className="bi bi-chevron-down"></i>
+                </span>
+              </div>
             </div>
 
-            {/* Start Date Filter */}
             <div className="col-md-3 mb-3">
-              <label htmlFor="startDate" className="form-label">Start Date</label>
+              <label htmlFor="startDate" className="form-label">
+                Start Date
+              </label>
               <input
                 type="date"
                 id="startDate"
@@ -260,9 +287,10 @@ const ViewKids = () => {
               />
             </div>
 
-            {/* End Date Filter */}
             <div className="col-md-3 mb-3">
-              <label htmlFor="endDate" className="form-label">End Date</label>
+              <label htmlFor="endDate" className="form-label">
+                End Date
+              </label>
               <input
                 type="date"
                 id="endDate"
@@ -276,11 +304,7 @@ const ViewKids = () => {
         </div>
       </div>
 
-      <CommonTable
-        columns={columns}
-        data={kidsLogData}
-        isLoading={isLoading}
-      />
+      <CommonTable columns={columns} data={kidsLogData} isLoading={isLoading} />
 
       {/* Pagination Controls */}
       <div className="card mt-4">
@@ -291,7 +315,7 @@ const ViewKids = () => {
                 <label className="me-2">Rows per page:</label>
                 <select
                   className="form-select"
-                  style={{ width: 'auto' }}
+                  style={{ width: "auto" }}
                   value={pagination.limit}
                   onChange={handleLimitChange}
                 >
@@ -300,13 +324,21 @@ const ViewKids = () => {
                   <option value="20">20</option>
                   <option value="50">50</option>
                 </select>
+                <span className="ms-3">
+                  Showing {startRecord}-{endRecord} of {pagination.total}{" "}
+                  records
+                </span>
               </div>
             </div>
             <div className="col-md-6">
               <div className="d-flex justify-content-end">
                 <nav aria-label="Page navigation">
                   <ul className="pagination mb-0">
-                    <li className={`page-item ${pagination.page === 1 ? 'disabled' : ''}`}>
+                    <li
+                      className={`page-item ${
+                        pagination.page === 1 ? "disabled" : ""
+                      }`}
+                    >
                       <button
                         className="page-link"
                         onClick={() => handlePageChange(pagination.page - 1)}
@@ -315,16 +347,33 @@ const ViewKids = () => {
                         Previous
                       </button>
                     </li>
-                    <li className="page-item">
-                      <span className="page-link">
-                        Page {pagination.page} of {Math.ceil(pagination.total / pagination.limit)}
-                      </span>
-                    </li>
-                    <li className={`page-item ${pagination.page >= Math.ceil(pagination.total / pagination.limit) ? 'disabled' : ''}`}>
+                    {Array.from(
+                      { length: totalPages },
+                      (_, index) => index + 1
+                    ).map((pageNum) => (
+                      <li
+                        key={pageNum}
+                        className={`page-item ${
+                          pagination.page === pageNum ? "active" : ""
+                        }`}
+                      >
+                        <button
+                          className="page-link"
+                          onClick={() => handlePageChange(pageNum)}
+                        >
+                          {pageNum}
+                        </button>
+                      </li>
+                    ))}
+                    <li
+                      className={`page-item ${
+                        pagination.page >= totalPages ? "disabled" : ""
+                      }`}
+                    >
                       <button
                         className="page-link"
                         onClick={() => handlePageChange(pagination.page + 1)}
-                        disabled={pagination.page >= Math.ceil(pagination.total / pagination.limit)}
+                        disabled={pagination.page >= totalPages}
                       >
                         Next
                       </button>

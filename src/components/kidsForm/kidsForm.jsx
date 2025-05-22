@@ -4,22 +4,23 @@ import * as Yup from "yup";
 
 const kidsSchema = Yup.object().shape({
   username: Yup.string()
+    .trim("Username cannot be just blank spaces") // Removes leading/trailing spaces
+    .strict(true) // Ensures .trim() is actually enforced
     .max(100, "Username must be under 100 characters")
     .required("Username is required"),
   first_name: Yup.string()
+    .trim("First name cannot be just blank spaces") // Removes leading/trailing spaces
+    .strict(true) // Ensures .trim() is actually enforced
     .max(100, "First name must be under 100 characters")
     .required("First name is required"),
   last_name: Yup.string()
+    .trim("Last name cannot be just blank spaces") // Removes leading/trailing spaces
+    .strict(true) // Ensures .trim() is actually enforced
     .max(100, "Last name must be under 100 characters")
     .required("Last name is required"),
 });
 
-const KidsForm = ({
-  onSubmit,
-  editkidsData,
-  isEdit = false,
-  isLoading,
-}) => {
+const KidsForm = ({ onSubmit, editkidsData, isEdit = false, isLoading }) => {
   const formik = useFormik({
     initialValues: {
       username: "",
@@ -28,12 +29,11 @@ const KidsForm = ({
     },
     validationSchema: kidsSchema,
     onSubmit: (values) => {
-
       let data = {
         username: values.username,
         first_name: values.first_name,
         last_name: values.last_name,
-      }
+      };
       onSubmit(data);
     },
   });
@@ -114,7 +114,7 @@ const KidsForm = ({
       </div>
 
       <div className="row">
-        <div className="col-sm-9 offset-sm-2">
+        <div className="col-sm-9 offset-sm-3">
           <button
             type="submit"
             className="btn btn-primary"

@@ -1,23 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css"; // Import Quill styles
 import { getCall } from "../../utils/api";
 
 const guidanceSchema = Yup.object().shape({
-  title: Yup.string().required("Title is required"),
+  title: Yup.string()
+    .required("Title is required")
+    .trim("Title cannot be just blank spaces") // Removes leading/trailing spaces
+    .strict(true), // Ensures .trim() is actually enforced,
   primary_feeling_id: Yup.string().required("Primary feeling is required"),
   secondary_feeling_id: Yup.string().required("Secondary feeling is required"),
   description: Yup.string()
-    .max(500, "Description must be under 500 characters")
+    // .max(500, "Description must be under 500 characters")
     .required("Description is required"),
   profile_photo: Yup.mixed()
-    .test("fileSize", "File too large", (value) => {
-      if (!value || typeof value === "string") return true;
-      return value.size <= 5 * 1024 * 1024; // 5MB limit
-    })
+    // .test("fileSize", "File too large", (value) => {
+    //   if (!value || typeof value === "string") return true;
+    //   return value.size <= 5 * 1024 * 1024; // 5MB limit
+    // })
     .test("fileType", "Unsupported file format", (value) => {
       if (!value || typeof value === "string") return true;
-      return ["image/jpeg", "image/png", "image/gif"].includes(value.type);
+      return ["image/jpeg", "image/png", "image/jpg"].includes(value.type);
     }),
 });
 
@@ -63,7 +68,9 @@ const GuidanceForm = ({
         // Fetch primary feelings
         const primaryResponse = await getCall("/admin/getPrimaryFeelings");
         // Ensure response.data is an array
-        setPrimaryFeelings(Array.isArray(primaryResponse?.data) ? primaryResponse.data : []);
+        setPrimaryFeelings(
+          Array.isArray(primaryResponse?.data) ? primaryResponse.data : []
+        );
       } catch (error) {
         console.error("Error fetching primary feelings:", error);
         setPrimaryFeelings([]);
@@ -81,19 +88,21 @@ const GuidanceForm = ({
       setSecondaryFeelings([]);
       return;
     }
-    
+
     setIsLoadingSecondary(true);
     try {
-      const secondaryResponse = await getCall(`/admin/getSecondaryFeelingsBasedOnPrimaryFeeling?primary_feeling_id=${primaryId}`);
-      
+      const secondaryResponse = await getCall(
+        `/admin/getSecondaryFeelingsBasedOnPrimaryFeeling?primary_feeling_id=${primaryId}`
+      );
+
       // Update to handle nested secondary_feelings structure
       const secondaryFeelingsData = secondaryResponse?.data || [];
       setSecondaryFeelings(secondaryFeelingsData);
-      
+
       // Reset secondary feeling if it doesn't exist in the new list
       if (formik.values.secondary_feeling_id) {
         const exists = secondaryFeelingsData.some(
-          feeling => feeling._id === formik.values.secondary_feeling_id
+          (feeling) => feeling._id === formik.values.secondary_feeling_id
         );
         if (!exists) {
           formik.setFieldValue("secondary_feeling_id", "");
@@ -118,8 +127,7 @@ const GuidanceForm = ({
 
   // Handle edit mode
   useEffect(() => {
-
-    console.log(editGuidanceData)
+    console.log(editGuidanceData);
 
     if (isEdit && editGuidanceData) {
       setPreviewImage(editGuidanceData?.profile_photo || null);
@@ -130,7 +138,7 @@ const GuidanceForm = ({
         description: editGuidanceData.description || "",
         profile_photo: editGuidanceData?.profile_photo || null,
       });
-      
+
       // Fetch secondary feelings for the selected primary feeling when in edit mode
       if (editGuidanceData.primary_feeling_id?._id) {
         fetchSecondaryFeelings(editGuidanceData.primary_feeling_id._id);
@@ -171,98 +179,100 @@ const GuidanceForm = ({
         </div>
       </div>
 
-    
-
       {/* Primary Feeling */}
       <div className="row mb-3">
         <label htmlFor="primary_feeling_id" className="col-sm-3 col-form-label">
           Primary Feeling<span style={{ color: "red" }}>*</span>
         </label>
         <div className="col-sm-9">
-          <select
-            id="primary_feeling_id"
-            name="primary_feeling_id"
-            className="form-control"
-            value={formik.values.primary_feeling_id}
-            onChange={handlePrimaryFeelingChange}
-            onBlur={formik.handleBlur}
-            disabled={fetchStatus === "loading"}
-          >
-            <option value="">Select Primary Feeling</option>
-            {primaryFeelings.map((feeling) => (
-              <option key={feeling._id} value={feeling._id}>
-                {feeling.name}
-              </option>
-            ))}
-          </select>
+          <div className="select-wrapper">
+            <select
+              id="primary_feeling_id"
+              name="primary_feeling_id"
+              className="form-control"
+              value={formik.values.primary_feeling_id}
+              onChange={handlePrimaryFeelingChange}
+              onBlur={formik.handleBlur}
+              disabled={fetchStatus === "loading"}
+            >
+              <option value="">Select Primary Feeling</option>
+              {primaryFeelings.map((feeling) => (
+                <option key={feeling._id} value={feeling._id}>
+                  {feeling.name}
+                </option>
+              ))}
+            </select>
+            <span className="dropdown-icon">
+              <i class="bi bi-chevron-down"></i>
+            </span>
+          </div>
           {fetchStatus === "loading" && <div>Loading feelings...</div>}
           {fetchStatus === "succeeded" && primaryFeelings.length === 0 && (
             <div style={{ color: "red" }}>No primary feelings available</div>
           )}
-          {formik.touched.primary_feeling_id && formik.errors.primary_feeling_id && (
-            <div style={{ color: "red" }}>{formik.errors.primary_feeling_id}</div>
-          )}
+          {formik.touched.primary_feeling_id &&
+            formik.errors.primary_feeling_id && (
+              <div style={{ color: "red" }}>
+                {formik.errors.primary_feeling_id}
+              </div>
+            )}
         </div>
       </div>
 
       {/* Secondary Feeling */}
       <div className="row mb-3">
-        <label htmlFor="secondary_feeling_id" className="col-sm-3 col-form-label">
+        <label
+          htmlFor="secondary_feeling_id"
+          className="col-sm-3 col-form-label"
+        >
           Secondary Feeling<span style={{ color: "red" }}>*</span>
         </label>
         <div className="col-sm-9">
-          <select
-            id="secondary_feeling_id"
-            name="secondary_feeling_id"
-            className="form-control"
-            value={formik.values.secondary_feeling_id}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            disabled={fetchStatus === "loading" || isLoadingSecondary || !formik.values.primary_feeling_id}
-          >
-            <option value="">Select Secondary Feeling</option>
-            {secondaryFeelings.map((feeling) => (
-              <option key={feeling._id} value={feeling._id}>
-                {feeling.name}
-              </option>
-            ))}
-          </select>
+          <div className="select-wrapper">
+            <select
+              id="secondary_feeling_id"
+              name="secondary_feeling_id"
+              className="form-control"
+              value={formik.values.secondary_feeling_id}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              disabled={
+                fetchStatus === "loading" ||
+                isLoadingSecondary ||
+                !formik.values.primary_feeling_id
+              }
+            >
+              <option value="">Select Secondary Feeling</option>
+              {secondaryFeelings.map((feeling) => (
+                <option key={feeling._id} value={feeling._id}>
+                  {feeling.name}
+                </option>
+              ))}
+            </select>
+            <span className="dropdown-icon">
+              <i class="bi bi-chevron-down"></i>
+            </span>
+          </div>
           {isLoadingSecondary && <div>Loading secondary feelings...</div>}
-          {!isLoadingSecondary && formik.values.primary_feeling_id && secondaryFeelings.length === 0 && (
-            <div style={{ color: "red" }}>No secondary feelings available for this primary feeling</div>
-          )}
-          {formik.touched.secondary_feeling_id && formik.errors.secondary_feeling_id && (
-            <div style={{ color: "red" }}>{formik.errors.secondary_feeling_id}</div>
-          )}
+          {!isLoadingSecondary &&
+            formik.values.primary_feeling_id &&
+            secondaryFeelings.length === 0 && (
+              <div style={{ color: "red" }}>
+                No secondary feelings available for this primary feeling
+              </div>
+            )}
+          {formik.touched.secondary_feeling_id &&
+            formik.errors.secondary_feeling_id && (
+              <div style={{ color: "red" }}>
+                {formik.errors.secondary_feeling_id}
+              </div>
+            )}
         </div>
       </div>
-
-      {/* Description */}
+      {/* Profile Photo Upload */}
       <div className="row mb-3">
-        <label htmlFor="description" className="col-sm-3 col-form-label">
-          Description<span style={{ color: "red" }}>*</span>
-        </label>
-        <div className="col-sm-9">
-          <textarea
-            id="description"
-            name="description"
-            className="form-control"
-            placeholder="Enter guidance description"
-            value={formik.values.description}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            rows="4"
-          />
-          {formik.touched.description && formik.errors.description && (
-            <div style={{ color: "red" }}>{formik.errors.description}</div>
-          )}
-        </div>
-      </div>
-
-        {/* Profile Photo Upload */}
-        <div className="row mb-3">
         <label htmlFor="profile_photo" className="col-sm-3 col-form-label">
-          Upload Photo
+          Upload Photo<span style={{ color: "red" }}>*</span>
         </label>
         <div className="col-sm-9">
           {previewImage && (
@@ -273,7 +283,8 @@ const GuidanceForm = ({
                 style={{ maxWidth: "100px", maxHeight: "100px" }}
               />
               <p>
-                {isEdit && formik.values.profile_photo === editGuidanceData?.profile_photo
+                {isEdit &&
+                formik.values.profile_photo === editGuidanceData?.profile_photo
                   ? "Current Photo"
                   : "Preview"}
               </p>
@@ -285,9 +296,16 @@ const GuidanceForm = ({
             name="profile_photo"
             className="form-control"
             accept="image/jpeg,image/png,image/gif"
+            onClick={(event) => {
+              // Reset input value so re-selecting same file triggers onChange
+              event.currentTarget.value = null;
+            }}
             onChange={(event) => {
               const file = event.currentTarget.files[0];
-              formik.setFieldValue("profile_photo", file || editGuidanceData?.profile_photo || null);
+              formik.setFieldValue(
+                "profile_photo",
+                file || editGuidanceData?.profile_photo || null
+              );
               if (file) {
                 setPreviewImage(URL.createObjectURL(file));
               } else {
@@ -301,13 +319,59 @@ const GuidanceForm = ({
           )}
         </div>
       </div>
+      {/* Description */}
+      <div className="row mb-3">
+        <label htmlFor="description" className="col-sm-3 col-form-label">
+          Description<span style={{ color: "red" }}>*</span>
+        </label>
+        <div
+          className="col-sm-9"
+          style={{
+            height: "200px",
+          }}
+        >
+          {/* <textarea
+            id="description"
+            name="description"
+            className="form-control"
+            placeholder="Enter guidance description"
+            value={formik.values.description}
+            onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
+            rows="4"
+          />
+          {formik.touched.description && formik.errors.description && (
+            <div style={{ color: "red" }}>{formik.errors.description}</div>
+          )} */}
+          <ReactQuill
+            id="description"
+            theme="snow"
+            value={formik.values.description}
+            onChange={(value) => formik.setFieldValue("description", value)}
+            onBlur={() => formik.setFieldTouched("description", true)}
+            placeholder="Enter guidance description"
+            style={{
+              height: "150px",
+              marginBottom: 5,
+              backgroundColor: "white",
+            }}
+          />
+        </div>
+        <div className="col-sm-9 offset-sm-3">
+          {formik.touched.description && formik.errors.description && (
+            <div style={{ color: "red" }}>{formik.errors.description}</div>
+          )}
+        </div>
+      </div>
 
       <div className="row">
-        <div className="col-sm-9 offset-sm-2">
+        <div className="col-sm-9 offset-sm-3">
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={isLoading || fetchStatus === "loading" || isLoadingSecondary}
+            disabled={
+              isLoading || fetchStatus === "loading" || isLoadingSecondary
+            }
           >
             {isLoading ? "Saving..." : isEdit ? "Update" : "Submit"}
           </button>

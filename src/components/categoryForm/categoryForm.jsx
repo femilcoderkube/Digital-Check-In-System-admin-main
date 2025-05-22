@@ -5,6 +5,8 @@ import ColorPicker from "react-pick-color";
 
 const photoSchema = Yup.object().shape({
   name: Yup.string()
+    .trim("Name cannot be just blank spaces") // Removes leading/trailing spaces
+    .strict(true) // Ensures .trim() is actually enforced
     .max(100, "Name must be under 100 characters")
     .required("Feeling name is required"),
   color_code: Yup.string()
@@ -21,7 +23,9 @@ const photoSchema = Yup.object().shape({
       // Allow null, undefined, or string
       if (!value || typeof value === "string") return true;
       // Only validate type for File objects
-      return ["image/gif"].includes(value.type);
+      return ["image/gif", "image/jpg", "image/png", "image/jpeg"].includes(
+        value.type
+      );
     }),
 });
 
@@ -78,8 +82,6 @@ const CategoryForm = ({
 
   return (
     <form onSubmit={formik.handleSubmit} className="container mt-4">
-      
-      
       {/* Name */}
       <div className="row mb-3">
         <label htmlFor="name" className="col-sm-3 col-form-label">
@@ -124,7 +126,7 @@ const CategoryForm = ({
 
       <div className="row mb-3">
         <label htmlFor="icon" className="col-sm-3 col-form-label">
-          Upload Icon
+          Upload Icon<span style={{ color: "red" }}>*</span>
         </label>
         <div className="col-sm-9">
           {previewImage && (
@@ -168,27 +170,32 @@ const CategoryForm = ({
       </div>
       <div className="row mb-3">
         <label htmlFor="status" className="col-sm-3 col-form-label">
-          Status
+          Status<span style={{ color: "red" }}>*</span>
         </label>
         <div className="col-sm-9">
-          <select
-            id="status"
-            name="status"
-            className="form-control"
-            value={formik.values.status}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-          >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+          <div className="select-wrapper">
+            <select
+              id="status"
+              name="status"
+              className="form-control"
+              value={formik.values.status}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+            <span className="dropdown-icon">
+              <i class="bi bi-chevron-down"></i>
+            </span>
+          </div>
           {formik.touched.status && formik.errors.status && (
             <div style={{ color: "red" }}>{formik.errors.status}</div>
           )}
         </div>
       </div>
       <div className="row">
-        <div className="col-sm-9 offset-sm-2">
+        <div className="col-sm-9 offset-sm-3">
           <button
             type="submit"
             className="btn btn-primary"

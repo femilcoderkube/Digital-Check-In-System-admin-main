@@ -6,6 +6,8 @@ import ColorPicker from "react-pick-color";
 
 const photoSchema = Yup.object().shape({
   name: Yup.string()
+    .trim("Name cannot be just blank spaces") // Removes leading/trailing spaces
+    .strict(true) // Ensures .trim() is actually enforced
     .max(100, "Name must be under 100 characters")
     .required("Feeling name is required"),
   color_code: Yup.string()
@@ -24,7 +26,9 @@ const photoSchema = Yup.object().shape({
       // Allow null, undefined, or string
       if (!value || typeof value === "string") return true;
       // Only validate type for File objects
-      return ["image/gif","image/jpg","image/png","image/jpeg"].includes(value.type);
+      return ["image/gif", "image/jpg", "image/png", "image/jpeg"].includes(
+        value.type
+      );
     }),
 });
 
@@ -58,7 +62,7 @@ const FeelingForm = ({
       }
       formData.append("primary_feeling_id", values.primary_feeling_id);
       formData.append("status", values.status); // Added status field
-      
+
       onSubmit(formData);
     },
   });
@@ -75,7 +79,9 @@ const FeelingForm = ({
           },
         });
         // Ensure response.data is an array
-        setPrimaryFeelings(Array.isArray(primaryResponse?.data) ? primaryResponse.data : []);
+        setPrimaryFeelings(
+          Array.isArray(primaryResponse?.data) ? primaryResponse.data : []
+        );
       } catch (error) {
         console.error("Error fetching primary feelings:", error);
         setPrimaryFeelings([]);
@@ -91,27 +97,27 @@ const FeelingForm = ({
   useEffect(() => {
     if (isEdit && editFeelingData) {
       console.log("Setting form values with edit data:", editFeelingData);
-      
+
       // Set preview to the existing icon URL
       if (editFeelingData.icon) {
         setPreviewImage(editFeelingData.icon);
       }
-      
+
       // Format primary_feeling_id if it's an object
       let primaryFeelingId = editFeelingData.primary_feeling_id;
-      if (typeof primaryFeelingId === 'object' && primaryFeelingId?._id) {
+      if (typeof primaryFeelingId === "object" && primaryFeelingId?._id) {
         primaryFeelingId = primaryFeelingId._id;
       }
-      
+
       // Set form values
       formik.setValues({
-        name: editFeelingData.name || "", 
-        color_code: editFeelingData.color_code || "", 
-        icon: editFeelingData.icon || null, 
+        name: editFeelingData.name || "",
+        color_code: editFeelingData.color_code || "",
+        icon: editFeelingData.icon || null,
         primary_feeling_id: primaryFeelingId || "",
         status: editFeelingData.status || "Active",
       });
-      
+
       console.log("Form values set:", formik.values);
     }
   }, [editFeelingData, isEdit]);
@@ -132,33 +138,41 @@ const FeelingForm = ({
           Primary Feeling<span style={{ color: "red" }}>*</span>
         </label>
         <div className="col-sm-9">
-          <select
-            id="primary_feeling_id"
-            name="primary_feeling_id"
-            className="form-control"
-            value={formik.values.primary_feeling_id}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-            disabled={fetchStatus === "loading"}
-          >
-            <option value="">Select Primary Feeling</option>
-            {primaryFeelings.map((feeling) => (
-              <option key={feeling._id} value={feeling._id}>
-                {feeling.name}
+          <div className="select-wrapper">
+            <select
+              id="primary_feeling_id"
+              name="primary_feeling_id"
+              className="form-control"
+              value={formik.values.primary_feeling_id}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              disabled={fetchStatus === "loading"}
+            >
+              <option value="" disabled>
+                Select Primary Feeling
               </option>
-            ))}
-          </select>
+              {primaryFeelings.map((feeling) => (
+                <option key={feeling._id} value={feeling._id}>
+                  {feeling.name}
+                </option>
+              ))}
+            </select>
+            <span className="dropdown-icon">
+              <i class="bi bi-chevron-down"></i>
+            </span>
+          </div>
           {fetchStatus === "loading" && <div>Loading feelings...</div>}
           {fetchStatus === "succeeded" && primaryFeelings.length === 0 && (
             <div style={{ color: "red" }}>No primary feelings available</div>
           )}
-          {formik.touched.primary_feeling_id && formik.errors.primary_feeling_id && (
-            <div style={{ color: "red" }}>{formik.errors.primary_feeling_id}</div>
-          )}
+          {formik.touched.primary_feeling_id &&
+            formik.errors.primary_feeling_id && (
+              <div style={{ color: "red" }}>
+                {formik.errors.primary_feeling_id}
+              </div>
+            )}
         </div>
       </div>
-
-     
 
       {/* Name */}
       <div className="row mb-3">
@@ -201,7 +215,7 @@ const FeelingForm = ({
           {formik.touched.color_code && formik.errors.color_code && (
             <div style={{ color: "red" }}>{formik.errors.color_code}</div>
           )} */}
-           <ColorPicker
+          <ColorPicker
             color={formik.values.color_code}
             onChange={(color) => {
               const selectedColor = color.hex;
@@ -215,10 +229,10 @@ const FeelingForm = ({
         </div>
       </div>
 
-       {/* Icon Upload */}
-       <div className="row mb-3">
+      {/* Icon Upload */}
+      <div className="row mb-3">
         <label htmlFor="icon" className="col-sm-3 col-form-label">
-          Upload Icon
+          Upload Icon<span style={{ color: "red" }}>*</span>
         </label>
         <div className="col-sm-9">
           {previewImage && (
@@ -228,9 +242,7 @@ const FeelingForm = ({
                 alt="Icon preview"
                 style={{ maxWidth: "100px", maxHeight: "100px" }}
               />
-              <p>
-                {isEdit ? "Current Icon" : "Preview"}
-              </p>
+              <p>{isEdit ? "Current Icon" : "Preview"}</p>
             </div>
           )}
           <input
@@ -241,7 +253,10 @@ const FeelingForm = ({
             accept="image/gif"
             onChange={(event) => {
               const file = event.currentTarget.files[0];
-              formik.setFieldValue("icon", file || editFeelingData?.icon || null);
+              formik.setFieldValue(
+                "icon",
+                file || editFeelingData?.icon || null
+              );
               if (file) {
                 setPreviewImage(URL.createObjectURL(file));
               } else {
@@ -262,17 +277,22 @@ const FeelingForm = ({
           Status<span style={{ color: "red" }}>*</span>
         </label>
         <div className="col-sm-9">
-          <select
-            id="status"
-            name="status"
-            className="form-control"
-            value={formik.values.status}
-            onChange={formik.handleChange}
-            onBlur={formik.handleBlur}
-          >
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-          </select>
+          <div className="select-wrapper">
+            <select
+              id="status"
+              name="status"
+              className="form-control"
+              value={formik.values.status}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+            <span className="dropdown-icon">
+              <i class="bi bi-chevron-down"></i>
+            </span>
+          </div>
           {formik.touched.status && formik.errors.status && (
             <div style={{ color: "red" }}>{formik.errors.status}</div>
           )}
@@ -281,7 +301,7 @@ const FeelingForm = ({
 
       {/* Submit Button */}
       <div className="row">
-        <div className="col-sm-9 offset-sm-2">
+        <div className="col-sm-9 offset-sm-3">
           <button
             type="submit"
             className="btn btn-primary"
@@ -295,4 +315,4 @@ const FeelingForm = ({
   );
 };
 
-export default FeelingForm; 
+export default FeelingForm;

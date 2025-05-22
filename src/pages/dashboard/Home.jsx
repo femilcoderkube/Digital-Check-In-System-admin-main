@@ -35,7 +35,7 @@ const Home = () => {
                   icon="bi-people-fill"
                   value={isLoading ? "Loading..." : data.totalUsers}
                   ClassName="customers-card home-card"
-                  setNavigate="/user-list"
+                  // setNavigate="/user-list"
                 />
 
                 <StatCard
@@ -43,7 +43,7 @@ const Home = () => {
                   icon="bi-emoji-smile"
                   value={isLoading ? "Loading..." : data.totalPrimaryFeelings}
                   ClassName="revenue-card home-card"
-                  setNavigate="/primary-feelings"
+                  setNavigate="/category-list"
                 />
 
                 <StatCard
@@ -51,7 +51,7 @@ const Home = () => {
                   icon="bi-emoji-heart-eyes"
                   value={isLoading ? "Loading..." : data.totalSecondaryFeelings}
                   ClassName="sales-card home-card"
-                  setNavigate="/secondary-feelings"
+                  setNavigate="/feeling-list"
                 />
 
                 <StatCard
@@ -59,7 +59,7 @@ const Home = () => {
                   icon="bi-emoji-dizzy"
                   value={isLoading ? "Loading..." : data.totalUsersFeelings}
                   ClassName="customers-card home-card"
-                  setNavigate="/user-feelings"
+                  setNavigate="/kids-list"
                 />
 
                 <StatCard

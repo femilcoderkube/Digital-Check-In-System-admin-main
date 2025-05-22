@@ -28,6 +28,7 @@ const Login = () => {
         const response = await postCall("/adminauth/login", values);
         console.log(response);
 
+        localStorage.setItem("adminData", JSON.stringify(response?.data));
         if (response?.data?.authToken) {
           localStorage.setItem("token", response?.data?.authToken);
           navigate("/");
@@ -176,12 +177,12 @@ const Login = () => {
                             Remember me
                           </label>
                         </div>
-                        {/* 
+
                         <div>
                           <Link to="/send-email" className="forgot_pass">
                             Forgot password ?
                           </Link>
-                        </div> */}
+                        </div>
                       </div>
                       <div className="col-12">
                         <ButtonWithLoader
