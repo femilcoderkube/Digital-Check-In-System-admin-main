@@ -250,7 +250,7 @@ const FeelingForm = ({
             id="icon"
             name="icon"
             className="form-control"
-            accept="image/gif"
+            accept="image/gif,image/png,image/jpeg,image/jpg"
             onChange={(event) => {
               const file = event.currentTarget.files[0];
               formik.setFieldValue(
