@@ -181,6 +181,11 @@ const KidsLis = () => {
       render: (item) => item.last_name,
     },
     // {
+    //   key: "is_verified",
+    //   label: "Verified",
+    //   render: (item) => JSON.stringify(item.is_verified),
+    // },
+    // {
     //   key: "city",
     //   label: "City",
     //   render: (item) => item.city,
