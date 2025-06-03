@@ -163,12 +163,14 @@ const ViewKids = () => {
   }, [id, filters, pagination.page, pagination.limit]);
 
   // Extract properties directly from kidsData
-  const { username, first_name, last_name } = kidsData;
+  const { username, email, first_name, last_name, is_deleted } = kidsData;
 
   const data = [
     { key: "Username", value: username || "N/A" },
+    { key: "Email", value: email || "N/A" },
     { key: "First Name", value: first_name || "N/A" },
     { key: "Last Name", value: last_name || "N/A" },
+    { key: "Status", value: is_deleted === 0 ? "Active" : "Deactive" || "N/A" },
   ];
 
   const columns = [

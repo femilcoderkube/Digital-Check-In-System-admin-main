@@ -1,6 +1,7 @@
 import React from "react";
 
 const CommonView = ({ title, image, name, data, user, isLoading }) => {
+  console.log("data", data);
   return (
     <>
       <div className="pageTitle">

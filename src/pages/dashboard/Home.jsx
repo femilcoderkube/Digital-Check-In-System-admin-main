@@ -31,11 +31,11 @@ const Home = () => {
             <div className="col-lg-12">
               <div className="row">
                 <StatCard
-                  title="Total Users"
+                  title="Total Kids"
                   icon="bi-people-fill"
                   value={isLoading ? "Loading..." : data.totalUsers}
                   ClassName="customers-card home-card"
-                  // setNavigate="/user-list"
+                  setNavigate="/kids-list"
                 />
 
                 <StatCard
@@ -59,7 +59,7 @@ const Home = () => {
                   icon="bi-emoji-dizzy"
                   value={isLoading ? "Loading..." : data.totalUsersFeelings}
                   ClassName="customers-card home-card"
-                  setNavigate="/kids-list"
+                  // setNavigate="/kids-list"
                 />
 
                 <StatCard

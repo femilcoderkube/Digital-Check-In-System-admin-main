@@ -171,6 +171,11 @@ const KidsLis = () => {
       render: (item) => item.username,
     },
     {
+      key: "email",
+      label: "Email",
+      render: (item) => (item.email ? item.email : "N/A"),
+    },
+    {
       key: "first_name",
       label: "First Name",
       render: (item) => item.first_name,
@@ -180,11 +185,11 @@ const KidsLis = () => {
       label: "Last Name",
       render: (item) => item.last_name,
     },
-    // {
-    //   key: "is_verified",
-    //   label: "Verified",
-    //   render: (item) => JSON.stringify(item.is_verified),
-    // },
+    {
+      key: "is_deleted",
+      label: "Status",
+      render: (item) => (item.is_deleted === 0 ? "Active" : "Deactive"),
+    },
     // {
     //   key: "city",
     //   label: "City",
