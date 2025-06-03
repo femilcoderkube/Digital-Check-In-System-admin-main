@@ -15,21 +15,21 @@ const photoSchema = Yup.object().shape({
     .required("Color code is required"),
   primary_feeling_id: Yup.string().required("Primary feeling is required"),
   status: Yup.string().required("Status is required"),
-  icon: Yup.mixed()
-    .test("fileSize", "File too large", (value) => {
-      // Allow null, undefined, or string (existing URL like "http://192.168.1.11:8089/uploads/icon-1747386054804-121253819.gif")
-      if (!value || typeof value === "string") return true;
-      // Only validate size for File objects
-      return value.size <= 5 * 1024 * 1024; // 5MB limit
-    })
-    .test("fileType", "Unsupported file format", (value) => {
-      // Allow null, undefined, or string
-      if (!value || typeof value === "string") return true;
-      // Only validate type for File objects
-      return ["image/gif", "image/jpg", "image/png", "image/jpeg"].includes(
-        value.type
-      );
-    }),
+  icon: Yup.mixed().test("fileSize", "File too large", (value) => {
+    // Allow null, undefined, or string (existing URL like "http://192.168.1.11:8089/uploads/icon-1747386054804-121253819.gif")
+    if (!value || typeof value === "string") return true;
+    // Only validate size for File objects
+    return value.size <= 5 * 1024 * 1024; // 5MB limit
+  }),
+  // .test("fileType", "Unsupported file format", (value) => {
+  // Allow null, undefined, or string
+  //   if (!value || typeof value === "string") return true;
+  //   // Only validate type for File objects
+  //   return ["image/gif", "image/jpg", "image/png", "image/jpeg"].includes(
+  //     value.type
+  //   );
+  // }
+  // ),
 });
 
 const FeelingForm = ({
